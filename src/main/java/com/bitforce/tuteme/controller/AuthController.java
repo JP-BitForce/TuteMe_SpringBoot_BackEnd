@@ -40,7 +40,7 @@ public class AuthController {
     JwtTokenProvider tokenProvider;
 
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser( @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -48,12 +48,9 @@ public class AuthController {
                         loginRequest.getPassword()
                 )
         );
-
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
         String jwt = tokenProvider.generateToken(authentication);
-//        System.out.println(tokenProvider.expiryDate);
-        return ResponseEntity.ok(new JwtAuthenticationResponse(jwt,tokenProvider.expiryDate));
+        return ResponseEntity.ok(new JwtAuthenticationResponse(jwt, tokenProvider.expiryDate));
     }
 
     @PostMapping("/signup")
@@ -62,23 +59,19 @@ public class AuthController {
             return new ResponseEntity(new ApiResponse(false, "Username is already taken!"),
                     HttpStatus.BAD_REQUEST);
         }
-
-
         // Creating user's account
-        User user = new User(signUpRequest.getFirstName(),  signUpRequest.getLastName(),signUpRequest.getUsername(),signUpRequest.getPassword());
-
+        User user = new User(signUpRequest.getFirstName(), signUpRequest.getLastName(), signUpRequest.getUsername(), signUpRequest.getPassword());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        String role;
 
-        if(userType.equals("tutor")){
-           role="TUTOR";
-        }else if(userType.equals("admin")){
-            role="ADMIN";
+        String role;
+        if (userType.equals("tutor")) {
+            role = "TUTOR";
+        } else if (userType.equals("admin")) {
+            role = "ADMIN";
+        } else {
+            role = "STUDENT";
         }
-        else {
-            role="STUDENT";
-        }
-        user.setRoles(("ROLE_"+role));
+        user.setRoles(("ROLE_" + role));
         user.setActive(true);
         User result = userRepository.save(user);
 

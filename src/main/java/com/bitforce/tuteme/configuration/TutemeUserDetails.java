@@ -20,8 +20,8 @@ public class TutemeUserDetails implements UserDetails {
     private boolean active;
     private List<GrantedAuthority> authorities;
 
-    public TutemeUserDetails(int id,String firstName, String lastName, String username, String password, boolean active, List<GrantedAuthority> authorities) {
-        this.id=id;
+    public TutemeUserDetails(int id, String firstName, String lastName, String username, String password, boolean active, List<GrantedAuthority> authorities) {
+        this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.username = username;
@@ -31,7 +31,7 @@ public class TutemeUserDetails implements UserDetails {
     }
 
     public static TutemeUserDetails create(User user) {
-        List<GrantedAuthority> authorities = Arrays.stream(user.getRoles().split(",") )
+        List<GrantedAuthority> authorities = Arrays.stream(user.getRoles().split(","))
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
 
@@ -47,15 +47,16 @@ public class TutemeUserDetails implements UserDetails {
     }
 
 
-
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
     }
 
 
-    public  int getId(){return id;}
+    public int getId() {
+        return id;
+    }
+
     public String getFirstName() {
         return firstName;
     }

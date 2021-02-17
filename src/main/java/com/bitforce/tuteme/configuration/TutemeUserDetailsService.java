@@ -17,12 +17,12 @@ import java.util.Optional;
 public class TutemeUserDetailsService implements UserDetailsService {
 
     @Autowired
-   private UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username).orElseThrow(
-                ()->new UsernameNotFoundException("Not found:"+username)
+                () -> new UsernameNotFoundException("Not found:" + username)
         );
 
         return TutemeUserDetails.create(user);
@@ -31,7 +31,7 @@ public class TutemeUserDetailsService implements UserDetailsService {
     @Transactional
     public UserDetails loadUserById(int id) throws NotFoundException {
         User user = userRepository.findById(id).orElseThrow(
-                () -> new NotFoundException("User not found "+id)
+                () -> new NotFoundException("User not found " + id)
         );
 
         return TutemeUserDetails.create(user);

@@ -1,7 +1,6 @@
 package com.bitforce.tuteme.dto;
 
 
-
 /**
  * Created by rajeevkumarsingh on 02/08/17.
  */

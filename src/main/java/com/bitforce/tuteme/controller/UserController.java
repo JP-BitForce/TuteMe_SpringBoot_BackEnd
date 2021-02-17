@@ -15,10 +15,8 @@ public class UserController {
     UserRepository userRepository;
 
     @GetMapping("/admin")
-    public String getAdmin(@CurrentUser TutemeUserDetails currentUser){
-
-
-        return "Hello "+ currentUser.getFirstName().toUpperCase()+" "+currentUser.getLastName().toUpperCase();
+    public String getAdmin(@CurrentUser TutemeUserDetails currentUser) {
+        return "Hello " + currentUser.getFirstName().toUpperCase() + " " + currentUser.getLastName().toUpperCase();
     }
 
 }
