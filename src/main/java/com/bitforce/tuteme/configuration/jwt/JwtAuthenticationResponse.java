@@ -1,4 +1,4 @@
-package com.bitforce.tuteme.dto;
+package com.bitforce.tuteme.configuration.jwt;
 
 import java.util.Date;
 

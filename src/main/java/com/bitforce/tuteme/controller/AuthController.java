@@ -3,7 +3,7 @@ package com.bitforce.tuteme.controller;
 
 import com.bitforce.tuteme.configuration.jwt.JwtTokenProvider;
 import com.bitforce.tuteme.dto.ApiResponse;
-import com.bitforce.tuteme.dto.JwtAuthenticationResponse;
+import com.bitforce.tuteme.configuration.jwt.JwtAuthenticationResponse;
 import com.bitforce.tuteme.dto.LoginRequest;
 import com.bitforce.tuteme.dto.SignUpRequest;
 import com.bitforce.tuteme.model.User;
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.Collections;
 
 
 @RestController
