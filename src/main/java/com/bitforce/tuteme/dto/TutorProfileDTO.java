@@ -8,7 +8,6 @@ public class TutorProfileDTO {
     private String lastName;
     private String email;
     private String gender;
-    private String dob;
     private String imageUrl;
     private String city;
     private String district;

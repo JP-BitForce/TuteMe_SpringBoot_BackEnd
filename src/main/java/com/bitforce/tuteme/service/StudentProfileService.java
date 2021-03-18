@@ -3,11 +3,15 @@ package com.bitforce.tuteme.service;
 import com.bitforce.tuteme.dto.StudentProfileDTO;
 import com.bitforce.tuteme.model.Student;
 import com.bitforce.tuteme.model.User;
+import com.bitforce.tuteme.model.UserAuth;
 import com.bitforce.tuteme.repository.StudentRepository;
+import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Service
 @AllArgsConstructor
@@ -15,6 +19,8 @@ public class StudentProfileService {
 
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
+    private final UserAuthRepository userAuthRepository;
+    private final FileStorageService fileStorageService;
 
 @Transactional
     public StudentProfileDTO updateStudentProfile(StudentProfileDTO studentProfileDTO, Long userId) {
@@ -34,5 +40,39 @@ public class StudentProfileService {
 
         studentProfileDTO.setImageUrl(user.getImageUrl());
         return studentProfileDTO;
+    }
+
+    public StudentProfileDTO getStudentProfile(Long userId) {
+        StudentProfileDTO studentProfileDTO = new StudentProfileDTO();
+        User user = userRepository.findById(userId).get();
+        UserAuth userAuth = userAuthRepository.findByUserId(userId);
+        Student student = studentRepository.findByUserId(userId);
+
+        studentProfileDTO.setFirstName(user.getFirstName());
+        studentProfileDTO.setLastName(user.getLastName());
+        studentProfileDTO.setEmail(userAuth.getEmail());
+        studentProfileDTO.setDob(student.getDob());
+        studentProfileDTO.setGender(user.getGender());
+        studentProfileDTO.setImageUrl(user.getImageUrl());
+        studentProfileDTO.setLevel(student.getLevel());
+        studentProfileDTO.setCity(user.getCity());
+        studentProfileDTO.setDistrict(user.getDistrict());
+        studentProfileDTO.setBio(student.getBio());
+
+        return studentProfileDTO;
+    }
+
+    public User updateStudentProfilePicture(MultipartFile file, Long userId) {
+        String fileName = fileStorageService.storeFile(file);
+
+        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("api/student/profile/uploads/")
+                .path(fileName)
+                .toUriString();
+
+        User user = userRepository.findById(userId).get();
+        user.setImageUrl(fileDownloadUri);
+        userRepository.save(user);
+        return user;
     }
 }
