@@ -20,7 +20,7 @@ public class StudentProfileService {
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
     private final UserAuthRepository userAuthRepository;
-    private final FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService = new FileStorageService("profilePicture/student");
 
 @Transactional
     public StudentProfileDTO updateStudentProfile(StudentProfileDTO studentProfileDTO, Long userId) {
@@ -66,7 +66,7 @@ public class StudentProfileService {
         String fileName = fileStorageService.storeFile(file);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("api/student/profile/uploads/")
+                .path("api/student/profile/uploads/profilePicture/student/")
                 .path(fileName)
                 .toUriString();
 

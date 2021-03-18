@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 public class StudentProfileController {
 
     private final StudentProfileService studentProfileService;
-    private final FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService = new FileStorageService("profilePicture/student");
 
     @PutMapping("/{userId}")
     public StudentProfileDTO updateStudentProfile(@RequestBody StudentProfileDTO studentProfileDTO, @PathVariable Long userId){
@@ -39,7 +39,7 @@ public class StudentProfileController {
     }
 
     @SneakyThrows
-    @GetMapping("uploads/{filename}")
+    @GetMapping("uploads/profilePicture/student/{filename}")
     public ResponseEntity<Resource> getImageResource(@PathVariable String filename, HttpServletRequest request) {
         return fileStorageService.loadFileAsResource(filename,request);
     }

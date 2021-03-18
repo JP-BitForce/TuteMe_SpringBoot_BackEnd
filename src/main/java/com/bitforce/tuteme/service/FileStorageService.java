@@ -2,6 +2,7 @@ package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.exception.FileStorageException;
 import com.bitforce.tuteme.exception.MyFileNotFoundException;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -22,14 +23,15 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 @Service
+@NoArgsConstructor
 public class FileStorageService {
 
-    private final Path fileStorageLocation;
+    private  Path fileStorageLocation;
     private static final Logger logger = LoggerFactory.getLogger(FileStorageService.class);
 
 
-    public FileStorageService() {
-        this.fileStorageLocation = Paths.get("uploads")
+    public FileStorageService(String pathString) {
+        this.fileStorageLocation = Paths.get("uploads/"+pathString)
                 .toAbsolutePath().normalize();
 
         try {

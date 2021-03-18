@@ -20,7 +20,7 @@ public class TutorProfileService {
     private final TutorRepository tutorRepository;
     private final UserRepository userRepository;
     private final UserAuthRepository userAuthRepository;
-    private final FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService = new FileStorageService("profilePicture/tutor");
 
 
     @Transactional
@@ -66,7 +66,7 @@ public class TutorProfileService {
         String fileName = fileStorageService.storeFile(file);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("api/tutor/profile/uploads/")
+                .path("api/tutor/profile/uploads/profilePicture/tutor/")
                 .path(fileName)
                 .toUriString();
 
