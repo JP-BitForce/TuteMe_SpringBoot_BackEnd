@@ -1,11 +1,9 @@
 package com.bitforce.tuteme.dto;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-public class ProfileDTO {
+public class StudentProfileDTO {
     private String firstName;
     private String lastName;
     private String email;
@@ -16,6 +14,4 @@ public class ProfileDTO {
     private String district;
     private String level;
     private String bio;
-    private String description;
-    private Double rating;
 }
