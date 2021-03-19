@@ -1,9 +1,9 @@
 package com.bitforce.tuteme.controller;
 
 
+import com.bitforce.tuteme.configuration.jwt.JwtAuthenticationResponse;
 import com.bitforce.tuteme.configuration.jwt.JwtTokenProvider;
 import com.bitforce.tuteme.dto.ApiResponse;
-import com.bitforce.tuteme.configuration.jwt.JwtAuthenticationResponse;
 import com.bitforce.tuteme.dto.LoginRequest;
 import com.bitforce.tuteme.dto.SignUpRequest;
 import com.bitforce.tuteme.model.Student;
@@ -15,7 +15,6 @@ import com.bitforce.tuteme.repository.TutorRepository;
 import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -44,16 +43,27 @@ public class AuthController {
 
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
-
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = tokenProvider.generateToken(authentication);
-        return ResponseEntity.ok(new JwtAuthenticationResponse(jwt, tokenProvider.expiryDate));
+        String jwt = null;
+        Authentication authentication = null;
+        UserAuth userAuth = userAuthRepository.findByEmail(loginRequest.getUsername()).get();
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword()
+                    )
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            jwt = tokenProvider.generateToken(authentication);
+            userAuth.setLoginAttempt(0);
+            userAuthRepository.save(userAuth);
+            return ResponseEntity.ok(new JwtAuthenticationResponse(jwt, tokenProvider.expiryDate));
+        } catch (Exception e) {
+            userAuth.setLoginAttempt(userAuth.getLoginAttempt() + 1);
+            userAuthRepository.save(userAuth);
+            return new ResponseEntity(new ApiResponse(false, "Credentials are Incorrect"),
+                    HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PostMapping("/signup")
@@ -73,20 +83,17 @@ public class AuthController {
         user.setType(userType.toLowerCase());
         User newUser = userRepository.save(user);
 
-        if (userType.equals("student")){
+        if (userType.equals("student")) {
             Student student = new Student();
             student.setUser(newUser);
             studentRepository.save(student);
-        }else if (userType.equals("tutor")){
+        } else if (userType.equals("tutor")) {
             Tutor tutor = new Tutor();
             tutor.setUser(newUser);
             tutorRepository.save(tutor);
         }
-
         userAuth.setUser(newUser);
         UserAuth result = userAuthRepository.save(userAuth);
-
-
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath().path("/users/{username}")

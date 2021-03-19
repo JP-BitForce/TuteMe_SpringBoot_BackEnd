@@ -15,6 +15,8 @@ public class UserAuth {
     private String email;
     private String password;
     private String role;
+    private int loginAttempt;
+    private String passwordResetKey;
 
     @OneToOne
     private User user;
