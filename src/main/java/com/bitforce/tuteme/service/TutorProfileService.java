@@ -8,10 +8,14 @@ import com.bitforce.tuteme.repository.TutorRepository;
 import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import javax.servlet.http.HttpServletRequest;
 
 @Service
 @AllArgsConstructor
@@ -74,5 +78,9 @@ public class TutorProfileService {
         user.setImageUrl(fileDownloadUri);
         userRepository.save(user);
         return user;
+    }
+
+    public ResponseEntity<Resource> getImageResource(String filename, HttpServletRequest request) {
+        return fileStorageService.loadFileAsResource(filename,request);
     }
 }

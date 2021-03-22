@@ -3,7 +3,6 @@ package com.bitforce.tuteme.controller;
 
 import com.bitforce.tuteme.dto.StudentProfileDTO;
 import com.bitforce.tuteme.model.User;
-import com.bitforce.tuteme.service.FileStorageService;
 import com.bitforce.tuteme.service.StudentProfileService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -21,7 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 public class StudentProfileController {
 
     private final StudentProfileService studentProfileService;
-    private final FileStorageService fileStorageService = new FileStorageService("profilePicture/student");
 
     @PutMapping("/{userId}")
     public StudentProfileDTO updateStudentProfile(@RequestBody StudentProfileDTO studentProfileDTO, @PathVariable Long userId){
@@ -41,7 +39,7 @@ public class StudentProfileController {
     @SneakyThrows
     @GetMapping("uploads/profilePicture/student/{filename}")
     public ResponseEntity<Resource> getImageResource(@PathVariable String filename, HttpServletRequest request) {
-        return fileStorageService.loadFileAsResource(filename,request);
+        return studentProfileService.getImageResource(filename,request);
     }
 
 
