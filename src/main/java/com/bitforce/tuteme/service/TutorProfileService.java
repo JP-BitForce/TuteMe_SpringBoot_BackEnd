@@ -26,8 +26,6 @@ public class TutorProfileService {
     private final UserAuthRepository userAuthRepository;
     private final FileStorageService fileStorageService = new FileStorageService("profilePicture/tutor");
 
-
-    @Transactional
     public TutorProfileDTO updateTutorProfile(TutorProfileDTO tutorProfileDTO, Long userId) {
 
         User user = userRepository.findById(userId).get();

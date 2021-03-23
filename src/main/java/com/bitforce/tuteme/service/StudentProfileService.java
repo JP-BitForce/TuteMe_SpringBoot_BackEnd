@@ -11,7 +11,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -26,7 +25,6 @@ public class StudentProfileService {
     private final UserAuthRepository userAuthRepository;
     private final FileStorageService fileStorageService = new FileStorageService("profilePicture/student");
 
-@Transactional
     public StudentProfileDTO updateStudentProfile(StudentProfileDTO studentProfileDTO, Long userId) {
         User user = userRepository.findById(userId).get();
         user.setFirstName(studentProfileDTO.getFirstName());
