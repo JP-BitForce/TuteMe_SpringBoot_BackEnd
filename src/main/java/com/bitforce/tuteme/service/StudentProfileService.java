@@ -8,6 +8,7 @@ import com.bitforce.tuteme.repository.StudentRepository;
 import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,20 +28,14 @@ public class StudentProfileService {
 
     public StudentProfileDTO updateStudentProfile(StudentProfileDTO studentProfileDTO, Long userId) {
         User user = userRepository.findById(userId).get();
-        user.setFirstName(studentProfileDTO.getFirstName());
-        user.setLastName(studentProfileDTO.getLastName());
-        user.setCity(studentProfileDTO.getCity());
-        user.setDistrict(studentProfileDTO.getDistrict());
-        user.setGender(studentProfileDTO.getGender());
+        studentProfileDTO.setImageUrl(user.getImageUrl());
+        BeanUtils.copyProperties(studentProfileDTO,user);
         userRepository.save(user);
 
         Student student = studentRepository.findByUserId(userId);
-        student.setDob(studentProfileDTO.getDob());
-        student.setLevel(studentProfileDTO.getLevel());
-        student.setBio(studentProfileDTO.getBio());
+        BeanUtils.copyProperties(studentProfileDTO,student);
         studentRepository.save(student);
 
-        studentProfileDTO.setImageUrl(user.getImageUrl());
         return studentProfileDTO;
     }
 
@@ -50,16 +45,9 @@ public class StudentProfileService {
         UserAuth userAuth = userAuthRepository.findByUserId(userId);
         Student student = studentRepository.findByUserId(userId);
 
-        studentProfileDTO.setFirstName(user.getFirstName());
-        studentProfileDTO.setLastName(user.getLastName());
+        BeanUtils.copyProperties(user,studentProfileDTO);
+        BeanUtils.copyProperties(student,studentProfileDTO);
         studentProfileDTO.setEmail(userAuth.getEmail());
-        studentProfileDTO.setDob(student.getDob());
-        studentProfileDTO.setGender(user.getGender());
-        studentProfileDTO.setImageUrl(user.getImageUrl());
-        studentProfileDTO.setLevel(student.getLevel());
-        studentProfileDTO.setCity(user.getCity());
-        studentProfileDTO.setDistrict(user.getDistrict());
-        studentProfileDTO.setBio(student.getBio());
 
         return studentProfileDTO;
     }

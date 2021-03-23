@@ -8,10 +8,10 @@ import com.bitforce.tuteme.repository.TutorRepository;
 import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -29,19 +29,14 @@ public class TutorProfileService {
     public TutorProfileDTO updateTutorProfile(TutorProfileDTO tutorProfileDTO, Long userId) {
 
         User user = userRepository.findById(userId).get();
-        user.setFirstName(tutorProfileDTO.getFirstName());
-        user.setLastName(tutorProfileDTO.getLastName());
-        user.setCity(tutorProfileDTO.getCity());
-        user.setDistrict(tutorProfileDTO.getDistrict());
-        user.setGender(tutorProfileDTO.getGender());
+        tutorProfileDTO.setImageUrl(user.getImageUrl());
+        BeanUtils.copyProperties(tutorProfileDTO,user);
         userRepository.save(user);
 
         Tutor tutor = tutorRepository.findByUserId(userId);
-        tutor.setDescription(tutorProfileDTO.getDescription());
-        tutor.setRating(tutorProfileDTO.getRating());
+        BeanUtils.copyProperties(tutorProfileDTO,tutor);
         tutorRepository.save(tutor);
 
-        tutorProfileDTO.setImageUrl(user.getImageUrl());
         return tutorProfileDTO;
     }
 
@@ -51,15 +46,9 @@ public class TutorProfileService {
         UserAuth userAuth = userAuthRepository.findByUserId(userId);
         Tutor tutor = tutorRepository.findByUserId(userId);
 
-        tutorProfileDTO.setFirstName(user.getFirstName());
-        tutorProfileDTO.setLastName(user.getLastName());
+        BeanUtils.copyProperties(user,tutorProfileDTO);
+        BeanUtils.copyProperties(tutor,tutorProfileDTO);
         tutorProfileDTO.setEmail(userAuth.getEmail());
-        tutorProfileDTO.setGender(user.getGender());
-        tutorProfileDTO.setImageUrl(user.getImageUrl());
-        tutorProfileDTO.setCity(user.getCity());
-        tutorProfileDTO.setDistrict(user.getDistrict());
-        tutorProfileDTO.setDescription(tutor.getDescription());
-        tutorProfileDTO.setRating(tutor.getRating());
 
         return tutorProfileDTO;
     }
