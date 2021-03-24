@@ -17,9 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- * Created by rajeevkumarsingh on 19/08/17.
- */
+
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(com.bitforce.tuteme.configuration.jwt.JwtAuthenticationFilter.class);
@@ -34,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                int userId = tokenProvider.getUserIdFromJWT(jwt);
+                Long userId = tokenProvider.getUserIdFromJWT(jwt);
 
                 /*
                     Note that you could also encode the user's username and roles inside JWT claims

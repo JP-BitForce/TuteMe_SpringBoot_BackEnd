@@ -1,6 +1,6 @@
 package com.bitforce.tuteme.configuration;
 
-import com.bitforce.tuteme.model.User;
+import com.bitforce.tuteme.model.UserAuth;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,36 +12,27 @@ import java.util.stream.Collectors;
 
 public class TutemeUserDetails implements UserDetails {
 
-    private int id;
-    private String firstName;
-    private String lastName;
-    private String username;
+    private Long id;
+    private String email;
     private String password;
-    private boolean active;
     private List<GrantedAuthority> authorities;
 
-    public TutemeUserDetails(int id, String firstName, String lastName, String username, String password, boolean active, List<GrantedAuthority> authorities) {
+    public TutemeUserDetails(Long id, String email, String password, List<GrantedAuthority> authorities) {
         this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.username = username;
+        this.email = email;
         this.password = password;
-        this.active = active;
         this.authorities = authorities;
     }
 
-    public static TutemeUserDetails create(User user) {
-        List<GrantedAuthority> authorities = Arrays.stream(user.getRoles().split(","))
+    public static TutemeUserDetails create(UserAuth userAuth) {
+        List<GrantedAuthority> authorities = Arrays.stream(userAuth.getRole().split(","))
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
 
         return new TutemeUserDetails(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getUsername(),
-                user.getPassword(),
-                user.isActive(),
+                userAuth.getId(),
+                userAuth.getEmail(),
+                userAuth.getPassword(),
                 authorities
         );
     }
@@ -53,19 +44,9 @@ public class TutemeUserDetails implements UserDetails {
     }
 
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-
-    public String getLastName() {
-        return lastName;
-    }
-
 
     @Override
     public String getPassword() {
@@ -74,7 +55,7 @@ public class TutemeUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return username;
+        return email;
     }
 
     @Override
@@ -94,6 +75,6 @@ public class TutemeUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return active;
+        return true;
     }
 }

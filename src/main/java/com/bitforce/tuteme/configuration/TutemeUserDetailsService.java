@@ -1,39 +1,41 @@
 package com.bitforce.tuteme.configuration;
 
 
-import com.bitforce.tuteme.model.User;
+import com.bitforce.tuteme.model.UserAuth;
+import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import javassist.NotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 @Service
+@AllArgsConstructor
 public class TutemeUserDetailsService implements UserDetailsService {
 
-    @Autowired
     private UserRepository userRepository;
+    private UserAuthRepository userAuthRepository;
+
+
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username).orElseThrow(
+        UserAuth userAuth = userAuthRepository.findByEmail(username).orElseThrow(
                 () -> new UsernameNotFoundException("Not found:" + username)
         );
 
-        return TutemeUserDetails.create(user);
+        return TutemeUserDetails.create(userAuth);
     }
 
     @Transactional
-    public UserDetails loadUserById(int id) throws NotFoundException {
-        User user = userRepository.findById(id).orElseThrow(
+    public UserDetails loadUserById(Long id) throws NotFoundException {
+        UserAuth userAuth = userAuthRepository.findById(id).orElseThrow(
                 () -> new NotFoundException("User not found " + id)
         );
 
-        return TutemeUserDetails.create(user);
+        return TutemeUserDetails.create(userAuth);
     }
 }
