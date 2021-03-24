@@ -2,11 +2,15 @@ package com.bitforce.tuteme.controller;
 
 
 import com.bitforce.tuteme.dto.StudentProfileDTO;
+import com.bitforce.tuteme.model.Student;
+import com.bitforce.tuteme.model.Tutor;
 import com.bitforce.tuteme.model.User;
 import com.bitforce.tuteme.service.StudentProfileService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +33,11 @@ public class StudentProfileController {
     @GetMapping("/{userId}")
     public StudentProfileDTO getStudentProfile(@PathVariable Long userId){
         return studentProfileService.getStudentProfile(userId);
+    }
+
+    @GetMapping()
+    public Page<Student> getTutorProfile(Pageable pageable){
+        return studentProfileService.getStudentProfiles(pageable);
     }
 
     @PutMapping("upload/{userId}")

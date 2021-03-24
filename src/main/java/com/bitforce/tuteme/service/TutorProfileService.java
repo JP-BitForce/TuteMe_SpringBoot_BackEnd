@@ -10,6 +10,8 @@ import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,6 +53,10 @@ public class TutorProfileService {
         tutorProfileDTO.setEmail(userAuth.getEmail());
 
         return tutorProfileDTO;
+    }
+
+    public Page<Tutor> getTutorProfiles(Pageable pageable) {
+        return tutorRepository.findAll(pageable);
     }
 
     public User updateTutorProfilePicture(MultipartFile file, Long userId) {
