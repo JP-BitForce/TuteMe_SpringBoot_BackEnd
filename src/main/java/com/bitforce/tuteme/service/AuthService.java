@@ -15,6 +15,7 @@ import com.bitforce.tuteme.repository.TutorRepository;
 import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import net.bytebuddy.utility.RandomString;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,6 +38,7 @@ public class AuthService {
     private final UserAuthRepository userAuthRepository;
     private final TutorRepository tutorRepository;
     private final StudentRepository studentRepository;
+    private final EmailService emailService;
 
     public ResponseEntity<?> authenticateUser(LoginRequest loginRequest) {
         String jwt = null;
@@ -108,4 +110,28 @@ public class AuthService {
         }
     }
 
+    public String forgotPassword(String email) {
+        String passwordResetKey = RandomString.make(6);
+        UserAuth userAuth = userAuthRepository.findByEmail(email).get();
+        userAuth.setPasswordResetKey(passwordResetKey);
+        userAuthRepository.save(userAuth);
+
+        emailService.send(email,emailService.buildEmail(userAuth.getUser().getFirstName(),passwordResetKey));
+        return passwordResetKey;
+    }
+
+    public boolean verifyCode(String code,String email) {
+        UserAuth userAuth = userAuthRepository.findByEmail(email).get();
+        if (userAuth.getPasswordResetKey().equals(code))
+            return true;
+        else
+        return false;
+    }
+
+    public String resetPassword(String password, String email) {
+        UserAuth userAuth = userAuthRepository.findByEmail(email).get();
+        userAuth.setPassword(passwordEncoder.encode(password));
+        userAuthRepository.save(userAuth);
+        return "Password Reset successfully...!";
+    }
 }

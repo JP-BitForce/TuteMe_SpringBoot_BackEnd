@@ -33,4 +33,19 @@ public class AuthController {
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO, @PathVariable Long userId){
         return authService.changePassword(changePasswordDTO,userId);
     }
+
+    @PostMapping("/forgotPassword")
+    public String forgotPassword(@RequestParam String email){
+        return authService.forgotPassword(email);
+    }
+
+    @PostMapping("forgotPassword/verifyCode")
+    public boolean verifyCode(@RequestParam String code,@RequestParam String email){
+        return authService.verifyCode(code,email);
+    }
+
+    @PostMapping("forgotPassword/resetPassword")
+    public String resetPassword(@RequestParam String password,@RequestParam String email){
+        return authService.resetPassword(password,email);
+    }
 }
