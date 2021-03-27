@@ -33,7 +33,7 @@ public class TutorProfileController {
         return tutorProfileService.getTutorProfile(userId);
     }
     @GetMapping()
-    public Page<Tutor> getTutorProfile(Pageable pageable){
+    public Page<Tutor> getTutorProfiles(Pageable pageable){
         return tutorProfileService.getTutorProfiles(pageable);
     }
 
