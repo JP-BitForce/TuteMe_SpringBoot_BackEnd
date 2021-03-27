@@ -1,5 +1,6 @@
 package com.bitforce.tuteme.model;
 
+import com.sun.istack.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ public class UserAuth {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
+    @NotNull
     private String email;
     private String password;
     private String role;
