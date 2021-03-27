@@ -111,13 +111,16 @@ public class AuthService {
     }
 
     public String forgotPassword(String email) {
-        String passwordResetKey = RandomString.make(6);
-        UserAuth userAuth = userAuthRepository.findByEmail(email).get();
-        userAuth.setPasswordResetKey(passwordResetKey);
-        userAuthRepository.save(userAuth);
+        if (userAuthRepository.existsByEmail(email)) {
+            String passwordResetKey = RandomString.make(6);
+            UserAuth userAuth = userAuthRepository.findByEmail(email).get();
+            userAuth.setPasswordResetKey(passwordResetKey);
+            userAuthRepository.save(userAuth);
 
-        emailService.send(email,emailService.buildEmail(userAuth.getUser().getFirstName(),passwordResetKey));
-        return passwordResetKey;
+            emailService.send(email, emailService.buildEmail(userAuth.getUser().getFirstName(), passwordResetKey));
+            return passwordResetKey;
+        }else
+            return "Invalid email address....";
     }
 
     public boolean verifyCode(String code,String email) {
