@@ -17,6 +17,8 @@ public class Course {
     private String imageUrl;
     private Double rating;
 
+    @OneToOne
+    private Tutor tutor;
     @ManyToOne
     private CourseCategory courseCategory;
 }
