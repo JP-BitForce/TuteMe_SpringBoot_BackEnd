@@ -24,6 +24,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -59,8 +60,7 @@ public class AuthService {
         } catch (Exception e) {
             userAuth.setLoginAttempt(userAuth.getLoginAttempt() + 1);
             userAuthRepository.save(userAuth);
-            return new ResponseEntity(new ApiResponse(false, "Credentials are Incorrect"),
-                    HttpStatus.BAD_REQUEST);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Credentials are Incorrect");
         }
     }
 
