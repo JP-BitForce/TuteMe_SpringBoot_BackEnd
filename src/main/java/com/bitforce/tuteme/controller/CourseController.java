@@ -3,10 +3,15 @@ package com.bitforce.tuteme.controller;
 import com.bitforce.tuteme.model.Course;
 import com.bitforce.tuteme.service.CourseService;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -17,8 +22,8 @@ public class CourseController {
     private final CourseService courseService;
 
     @PostMapping
-    public Course createCategory(@RequestBody Course course){
-        return courseService.createCourse(course);
+    public Course createCourse(@RequestParam MultipartFile file, @ModelAttribute Course course){
+        return courseService.createCourse(file,course);
     }
 
     @GetMapping
@@ -39,5 +44,11 @@ public class CourseController {
     @DeleteMapping("/{courseId}")
     public String deleteCourse(@PathVariable Long courseId){
         return courseService.deleteCourse(courseId);
+    }
+
+    @SneakyThrows
+    @GetMapping("uploads/courses/{filename}")
+    public ResponseEntity<Resource> getImageResource(@PathVariable String filename, HttpServletRequest request) {
+        return courseService.getImageResource(filename,request);
     }
 }
