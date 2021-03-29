@@ -2,6 +2,8 @@ package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.model.CourseEnrollment;
 import com.bitforce.tuteme.repository.CourseEnrollmentRepository;
+import com.bitforce.tuteme.repository.CourseRepository;
+import com.bitforce.tuteme.repository.StudentRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,11 +14,13 @@ import org.springframework.stereotype.Service;
 public class CourseEnrollmentService {
 
     private final CourseEnrollmentRepository courseEnrollmentRepository;
+    private final CourseRepository courseRepository;
+    private final StudentRepository studentRepository;
 
-    public CourseEnrollment enrollToCourse(CourseEnrollment newCourseEnrollment) {
+    public CourseEnrollment enrollToCourse(Long courseId, Long studentId) {
         CourseEnrollment courseEnrollment = new CourseEnrollment();
-        courseEnrollment.setCourse(newCourseEnrollment.getCourse());
-        courseEnrollment.setStudent(newCourseEnrollment.getStudent());
+        courseEnrollment.setCourse(courseRepository.findById(courseId).get());
+        courseEnrollment.setStudent(studentRepository.findById(studentId).get());
         courseEnrollmentRepository.save(courseEnrollment);
         return courseEnrollment;
     }

@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.*;
 public class CourseEnrollmentController {
     private final CourseEnrollmentService courseEnrollmentService;
 
-    @PutMapping
-    public CourseEnrollment enrollToCourse(@ModelAttribute CourseEnrollment courseEnrollment){
-        return courseEnrollmentService.enrollToCourse(courseEnrollment);
+    @PostMapping
+    public CourseEnrollment enrollToCourse(@RequestParam Long courseId, @RequestParam Long studentId ){
+        return courseEnrollmentService.enrollToCourse(courseId,studentId);
     }
 
     @GetMapping("/{studentId}")
