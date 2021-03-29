@@ -66,7 +66,7 @@ public class AuthService {
 
     public ResponseEntity<?> registerUser(SignUpRequest signUpRequest, String userType) {
         if (userAuthRepository.existsByEmail(signUpRequest.getEmail())) {
-            return new ResponseEntity(new ApiResponse(false, "Username is already taken!"),
+            return new ResponseEntity(new ApiResponse(false, "Email address is already taken!"),
                     HttpStatus.BAD_REQUEST);
         }
         // Creating user's account
@@ -134,6 +134,7 @@ public class AuthService {
     public String resetPassword(String password, String email) {
         UserAuth userAuth = userAuthRepository.findByEmail(email).get();
         userAuth.setPassword(passwordEncoder.encode(password));
+        userAuth.setPasswordResetKey(null);
         userAuthRepository.save(userAuth);
         return "Password Reset successfully...!";
     }
