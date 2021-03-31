@@ -10,16 +10,16 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @AllArgsConstructor
 @RestController
-@RequestMapping("/api/feedback")
+@RequestMapping()
 public class SystemFeedbackController {
     private final SystemFeedbackService systemFeedbackService;
 
-    @PostMapping
-    public SystemFeedback createFeedback(@RequestBody SystemFeedback systemFeedback){
-        return systemFeedbackService.createFeedback(systemFeedback);
+    @PostMapping("/api/feedback")
+    public SystemFeedback createFeedback(@RequestParam Long userId , @RequestBody SystemFeedback systemFeedback){
+        return systemFeedbackService.createFeedback(userId,systemFeedback);
     }
 
-    @GetMapping
+    @GetMapping("/api/landingPage/feedback")
     public Page<SystemFeedback> getAllFeedbacks(Pageable pageable){
         return systemFeedbackService.getAllFeedbacks(pageable);
     }
