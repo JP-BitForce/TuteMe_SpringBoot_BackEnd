@@ -5,17 +5,15 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
-@Data
 @Entity
+@Data
 @NoArgsConstructor
-public class SystemFeedback {
+public class CourseEnrollment {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private String feedback;
-    private Double rating;
-    private boolean finding;
-
     @ManyToOne
-    private User user;
+    private Course course;
+    @ManyToOne
+    private Student student;
 }

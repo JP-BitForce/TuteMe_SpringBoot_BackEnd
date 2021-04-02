@@ -4,21 +4,22 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
 @NoArgsConstructor
-public class Course {
+public class Blog {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private String name;
-    private String description;
-    private String imageUrl;
-    private Double rating;
-
+    private String title;
+    private String content;
+    private Integer likes;
+    private LocalDateTime date;
+    @OneToMany
+    List<Comment> comments;
     @ManyToOne
-    private Tutor tutor;
-    @ManyToOne
-    private CourseCategory courseCategory;
+    User user;
 }

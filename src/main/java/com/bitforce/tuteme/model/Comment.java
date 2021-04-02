@@ -4,17 +4,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
-@Data
 @Entity
+@Data
 @NoArgsConstructor
-public class SystemFeedback {
+public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private String feedback;
-    private Double rating;
-    private boolean finding;
+    private String blogComment;
+    private LocalDateTime date;
 
     @ManyToOne
     private User user;
