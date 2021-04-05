@@ -1,19 +1,16 @@
 package com.bitforce.tuteme.controller;
 
 import com.bitforce.tuteme.configuration.JwtUtil;
-import com.bitforce.tuteme.dto.ChangePasswordDTO;
-import com.bitforce.tuteme.dto.LoginRequest;
 import com.bitforce.tuteme.dto.ControllerResponse.AuthenticationControllerResponse;
+import com.bitforce.tuteme.dto.LoginRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.AuthenticationResponse;
 import com.bitforce.tuteme.dto.SignUpRequest;
 import com.bitforce.tuteme.service.AuthService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
 
@@ -57,11 +54,6 @@ public class AuthController {
     public ResponseEntity<?> registerUser(@RequestBody SignUpRequest signUpRequest, @RequestParam String userType) {
         return authService.registerUser(signUpRequest, userType);
 
-    }
-
-    @PostMapping("/changePassword/{userId}")
-    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO, @PathVariable Long userId) {
-        return authService.changePassword(changePasswordDTO, userId);
     }
 
     @PostMapping("/forgotPassword")
