@@ -4,6 +4,7 @@ import com.bitforce.tuteme.dto.StudentProfileDTO;
 import com.bitforce.tuteme.model.Student;
 import com.bitforce.tuteme.model.User;
 import com.bitforce.tuteme.model.UserAuth;
+import com.bitforce.tuteme.repository.CourseEnrollmentRepository;
 import com.bitforce.tuteme.repository.StudentRepository;
 import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
@@ -26,6 +27,7 @@ public class StudentProfileService {
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
     private final UserAuthRepository userAuthRepository;
+    private final CourseEnrollmentRepository courseEnrollmentRepository;
     private final FileStorageService fileStorageService = new FileStorageService("profilePicture/student");
 
     public StudentProfileDTO updateStudentProfile(StudentProfileDTO studentProfileDTO, Long userId) {

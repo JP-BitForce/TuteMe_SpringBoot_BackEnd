@@ -15,6 +15,7 @@ public class NotificationSettingController {
 
     @PostMapping
     public NotificationSetting setNotification(@RequestBody NotificationSetting notificationSetting,@RequestParam Long userId){
+
         return notificationSettingService.setNotification(notificationSetting,userId);
     }
 

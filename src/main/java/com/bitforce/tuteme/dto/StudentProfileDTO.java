@@ -14,4 +14,6 @@ public class StudentProfileDTO {
     private String district;
     private String level;
     private String bio;
+    private int courseCount;
+    private int tutorCount;
 }
