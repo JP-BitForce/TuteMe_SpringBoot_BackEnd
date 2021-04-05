@@ -1,11 +1,12 @@
 package com.bitforce.tuteme.service;
 
-import com.bitforce.tuteme.configuration.jwt.JwtAuthenticationResponse;
-import com.bitforce.tuteme.configuration.jwt.JwtTokenProvider;
+import com.bitforce.tuteme.configuration.JwtUtil;
 import com.bitforce.tuteme.dto.ApiResponse;
 import com.bitforce.tuteme.dto.ChangePasswordDTO;
 import com.bitforce.tuteme.dto.LoginRequest;
+import com.bitforce.tuteme.dto.ServiceResponse.AuthenticationResponse;
 import com.bitforce.tuteme.dto.SignUpRequest;
+import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.Student;
 import com.bitforce.tuteme.model.Tutor;
 import com.bitforce.tuteme.model.User;
@@ -16,6 +17,8 @@ import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import net.bytebuddy.utility.RandomString;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,28 +38,46 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider tokenProvider;
     private final UserAuthRepository userAuthRepository;
     private final TutorRepository tutorRepository;
     private final StudentRepository studentRepository;
     private final EmailService emailService;
 
-    public ResponseEntity<?> authenticateUser(LoginRequest loginRequest) {
-        String jwt = null;
-        Authentication authentication = null;
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
+    public AuthenticationResponse authenticateUser(LoginRequest loginRequest, JwtUtil jwtUtil) {
         UserAuth userAuth = userAuthRepository.findByEmail(loginRequest.getUsername()).get();
         try {
-            authentication = authenticationManager.authenticate(
+            Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getUsername(),
                             loginRequest.getPassword()
                     )
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            jwt = tokenProvider.generateToken(authentication);
+            String jwt = jwtUtil.generate(authentication);
             userAuth.setLoginAttempt(0);
             userAuthRepository.save(userAuth);
-            return ResponseEntity.ok(new JwtAuthenticationResponse(jwt, tokenProvider.expiryDate));
+            
+            Long profileId = null;
+            Long userId = userAuth.getUser().getId();
+            if (userAuth.getRole().equals("ROLE_STUDENT")) {
+                Student student = studentRepository.findByUserId(userId);
+                profileId = student.getId();
+            }
+            if (userAuth.getRole().equals("ROLE_TUTOR")) {
+                Tutor tutor = tutorRepository.findByUserId(userId);
+                profileId = tutor.getId();
+            }
+            return AuthenticationResponse
+                    .builder()
+                    .token(jwt)
+                    .userId(userId)
+                    .email(userAuth.getEmail())
+                    .profileId(profileId)
+                    .role(userAuth.getRole())
+                    .build();
+
         } catch (Exception e) {
             userAuth.setLoginAttempt(userAuth.getLoginAttempt() + 1);
             userAuthRepository.save(userAuth);

@@ -1,6 +1,8 @@
 package com.bitforce.tuteme.service;
 
+import com.bitforce.tuteme.dto.ServiceRequest.AddSystemFeedbackRequest;
 import com.bitforce.tuteme.model.SystemFeedback;
+import com.bitforce.tuteme.model.User;
 import com.bitforce.tuteme.repository.SystemFeedbackRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -16,11 +18,15 @@ public class SystemFeedbackService {
     private final SystemFeedbackRepository systemFeedbackRepository;
     private final UserRepository userRepository;
 
-    public SystemFeedback createFeedback(Long userId, SystemFeedback systemFeedback) {
-        SystemFeedback systemFeedback1 = new SystemFeedback();
-        systemFeedback.setUser(userRepository.findById(userId).get());
-        BeanUtils.copyProperties(systemFeedback,systemFeedback1);
-        return systemFeedbackRepository.save(systemFeedback1);
+    public SystemFeedback createFeedback(AddSystemFeedbackRequest request) {
+        User user = userRepository.findById(Long.parseLong(request.getUserId())).get();
+        SystemFeedback systemFeedback = new SystemFeedback(
+                request.getFeedback(),
+                request.getRating(),
+                request.isServiceFind(),
+                user
+        );
+        return systemFeedbackRepository.save(systemFeedback);
     }
 
     public Page<SystemFeedback> getAllFeedbacks(Pageable pageable) {
