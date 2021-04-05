@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.*;
 public class SystemFeedbackController {
     private final SystemFeedbackService systemFeedbackService;
 
-    @PostMapping("/api/feedback")
-    public SystemFeedback createFeedback(@RequestParam Long userId , @RequestBody SystemFeedback systemFeedback){
-        return systemFeedbackService.createFeedback(userId,systemFeedback);
-    }
+//    @PostMapping("/api/feedback")
+//    public SystemFeedback createFeedback(@RequestParam Long userId , @RequestBody SystemFeedback systemFeedback){
+//        return systemFeedbackService.createFeedback(userId,systemFeedback);
+//    }
 
     @GetMapping("/api/landingPage/feedback")
     public Page<SystemFeedback> getAllFeedbacks(Pageable pageable){
