@@ -49,9 +49,14 @@ public class StudentProfileService {
         UserAuth userAuth = userAuthRepository.findByUserId(userId);
         Student student = studentRepository.findByUserId(userId);
 
+        int courseCount = courseEnrollmentRepository.findAllCourseCountByStudentId(student.getId());
+        int tutorsCount = courseEnrollmentRepository.findAllTutorsCountByStudentId(student.getId());
+
         BeanUtils.copyProperties(user,studentProfileDTO);
         BeanUtils.copyProperties(student,studentProfileDTO);
         studentProfileDTO.setEmail(userAuth.getEmail());
+        studentProfileDTO.setCourseCount(courseCount);
+        studentProfileDTO.setTutorCount(tutorsCount);
 
         return studentProfileDTO;
     }
