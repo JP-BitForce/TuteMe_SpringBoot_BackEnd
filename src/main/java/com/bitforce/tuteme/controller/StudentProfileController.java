@@ -40,7 +40,7 @@ public class StudentProfileController {
         return studentProfileService.getStudentProfiles(pageable);
     }
 
-    @PutMapping("upload/{userId}")
+    @RequestMapping(value = "upload/{userId}", headers = "Content-Type= multipart/form-data", method = RequestMethod.POST)
     public User updateStudentProfilePicture(@RequestParam MultipartFile file, @PathVariable Long userId){
         return studentProfileService.updateStudentProfilePicture(file,userId);
     }
