@@ -13,8 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
-
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @AllArgsConstructor
 @RestController
@@ -45,7 +43,7 @@ public class StudentProfileController {
 
     @SneakyThrows
     @GetMapping(value = "uploads/profilePicture/student/{filename}",produces = MediaType.IMAGE_JPEG_VALUE)
-    public byte[] getImageResource(@PathVariable String filename, HttpServletRequest request) {
+    public byte[] getImageResource(@PathVariable String filename) {
         return studentProfileService.getImageByte(filename);
     }
 
