@@ -1,6 +1,8 @@
 package com.bitforce.tuteme.controller;
 
 import com.bitforce.tuteme.dto.ChangePasswordDTO;
+import com.bitforce.tuteme.dto.UserProfilePictureDTO;
+import com.bitforce.tuteme.model.User;
 import com.bitforce.tuteme.repository.UserRepository;
 import com.bitforce.tuteme.service.AuthService;
 import lombok.AllArgsConstructor;
@@ -21,5 +23,12 @@ public class UserController {
         return authService.changePassword(changePasswordDTO, userId);
     }
 
+    @GetMapping("/profilePic/{userId}")
+    public UserProfilePictureDTO getProfilePic(@PathVariable Long userId){
+        User user =userRepository.findById(userId).get();
+        UserProfilePictureDTO userProfilePictureDTO = new UserProfilePictureDTO();
+        userProfilePictureDTO.setImageUrl(user.getImageUrl());
+        return userProfilePictureDTO;
+    }
 
 }
