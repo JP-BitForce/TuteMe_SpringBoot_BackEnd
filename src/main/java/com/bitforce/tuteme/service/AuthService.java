@@ -101,17 +101,20 @@ public class AuthService {
 
     public ResponseEntity<?> changePassword(ChangePasswordDTO changePasswordDTO, Long userId) {
         UserAuth userAuth =userAuthRepository.findByUserId(userId);
-        if (passwordEncoder.matches(changePasswordDTO.getOldPassword(),userAuth.getPassword())){
+        if (passwordEncoder.matches(changePasswordDTO.getOldPassword(),userAuth.getPassword()))
+        {
             userAuth.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
             userAuthRepository.save(userAuth);
             return ResponseEntity.ok(new ApiResponse(true, "User Password changed successfully"));
-        }else {
+        }
+        else {
             return new  ResponseEntity(new ApiResponse(false, "User password is Incorrect"),HttpStatus.BAD_REQUEST);
         }
     }
 
     public String forgotPassword(String email) {
-        if (userAuthRepository.existsByEmail(email)) {
+        if (userAuthRepository.existsByEmail(email))
+        {
             String passwordResetKey = RandomString.make(6);
             UserAuth userAuth = userAuthRepository.findByEmail(email).get();
             userAuth.setPasswordResetKey(passwordResetKey);
@@ -119,7 +122,8 @@ public class AuthService {
 
             emailService.send(email, emailService.buildEmail(userAuth.getUser().getFirstName(), passwordResetKey));
             return passwordResetKey;
-        }else
+        }
+        else
             return "Invalid email address....";
     }
 
