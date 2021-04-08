@@ -4,14 +4,12 @@ import com.bitforce.tuteme.model.CourseCategory;
 import com.bitforce.tuteme.service.CourseCategoryService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -43,9 +41,9 @@ public class CourseCategoryController {
     }
 
     @SneakyThrows
-    @GetMapping("uploads/courseCategory/{filename}")
-    public ResponseEntity<Resource> getImageResource(@PathVariable String filename, HttpServletRequest request) {
-        return courseCategoryService.getImageResource(filename,request);
+    @GetMapping(value = "uploads/courseCategory/{filename}",produces = MediaType.IMAGE_JPEG_VALUE)
+    public byte[] getImageResource(@PathVariable String filename) {
+        return courseCategoryService.getImageByte(filename);
     }
 
 }

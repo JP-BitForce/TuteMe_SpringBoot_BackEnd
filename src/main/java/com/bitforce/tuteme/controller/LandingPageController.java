@@ -5,21 +5,19 @@ import com.bitforce.tuteme.service.SystemFeedbackService;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @AllArgsConstructor
 @RestController
-@RequestMapping()
-public class SystemFeedbackController {
+@RequestMapping("/api/landingPage")
+public class LandingPageController {
     private final SystemFeedbackService systemFeedbackService;
 
-    @PostMapping("/api/feedback")
-    public SystemFeedback createFeedback(@RequestParam Long userId , @RequestBody SystemFeedback systemFeedback){
-        return systemFeedbackService.createFeedback(userId,systemFeedback);
-    }
-
-    @GetMapping("/api/landingPage/feedback")
+    @GetMapping("/feedback")
     public Page<SystemFeedback> getAllFeedbacks(Pageable pageable){
         return systemFeedbackService.getAllFeedbacks(pageable);
     }

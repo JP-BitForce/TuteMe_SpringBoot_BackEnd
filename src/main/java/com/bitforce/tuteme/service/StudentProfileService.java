@@ -4,6 +4,7 @@ import com.bitforce.tuteme.dto.StudentProfileDTO;
 import com.bitforce.tuteme.model.Student;
 import com.bitforce.tuteme.model.User;
 import com.bitforce.tuteme.model.UserAuth;
+import com.bitforce.tuteme.repository.CourseEnrollmentRepository;
 import com.bitforce.tuteme.repository.StudentRepository;
 import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
@@ -18,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 @Service
 @AllArgsConstructor
@@ -26,6 +28,7 @@ public class StudentProfileService {
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
     private final UserAuthRepository userAuthRepository;
+    private final CourseEnrollmentRepository courseEnrollmentRepository;
     private final FileStorageService fileStorageService = new FileStorageService("profilePicture/student");
 
     public StudentProfileDTO updateStudentProfile(StudentProfileDTO studentProfileDTO, Long userId) {
@@ -47,9 +50,14 @@ public class StudentProfileService {
         UserAuth userAuth = userAuthRepository.findByUserId(userId);
         Student student = studentRepository.findByUserId(userId);
 
+        int courseCount = courseEnrollmentRepository.findAllCourseCountByStudentId(student.getId());
+        int tutorsCount = courseEnrollmentRepository.findAllTutorsCountByStudentId(student.getId());
+
         BeanUtils.copyProperties(user,studentProfileDTO);
         BeanUtils.copyProperties(student,studentProfileDTO);
         studentProfileDTO.setEmail(userAuth.getEmail());
+        studentProfileDTO.setCourseCount(courseCount);
+        studentProfileDTO.setTutorCount(tutorsCount);
 
         return studentProfileDTO;
     }
@@ -74,5 +82,9 @@ public class StudentProfileService {
 
     public ResponseEntity<Resource> getImageResource(String filename, HttpServletRequest request) {
         return fileStorageService.loadFileAsResource(filename,request);
+    }
+
+    public byte[] getImageByte(String filename) throws IOException {
+        return fileStorageService.convert(filename);
     }
 }

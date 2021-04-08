@@ -15,6 +15,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -93,5 +95,13 @@ public class FileStorageService {
         }
     }
 
+    public  byte[] convert(String fileName) throws IOException {
+        File convFile = new File(fileStorageLocation.toString(),fileName);
+        byte[] bytesArray = new byte[ (int)convFile.length()];
+        FileInputStream fis = new FileInputStream(convFile);
+        fis.read(bytesArray);
+        fis.close();
+        return bytesArray;
+    }
 
 }

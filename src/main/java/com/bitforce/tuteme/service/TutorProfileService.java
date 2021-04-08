@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 @Service
 @AllArgsConstructor
@@ -75,5 +76,9 @@ public class TutorProfileService {
 
     public ResponseEntity<Resource> getImageResource(String filename, HttpServletRequest request) {
         return fileStorageService.loadFileAsResource(filename,request);
+    }
+
+    public byte[] getImageByte(String filename) throws IOException {
+        return fileStorageService.convert(filename);
     }
 }

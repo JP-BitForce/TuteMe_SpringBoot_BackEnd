@@ -15,11 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @AllArgsConstructor
 public class TutemeUserDetailsService implements UserDetailsService {
-
-    private UserRepository userRepository;
-    private UserAuthRepository userAuthRepository;
-
-
+    private final UserAuthRepository userAuthRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
