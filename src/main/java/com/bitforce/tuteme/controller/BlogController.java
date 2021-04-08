@@ -2,14 +2,12 @@ package com.bitforce.tuteme.controller;
 
 import com.bitforce.tuteme.PageableEntity.PageableCoreBlogs;
 import com.bitforce.tuteme.dto.ControllerRequest.AddNewBlogControllerRequest;
+import com.bitforce.tuteme.dto.ControllerRequest.GetBlogsControllerRequest;
 import com.bitforce.tuteme.dto.ControllerResponse.GetBlogsControllerResponse;
 import com.bitforce.tuteme.dto.ServiceRequest.AddNewBlogRequest;
 import com.bitforce.tuteme.model.Blog;
 import com.bitforce.tuteme.service.BlogService;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -45,23 +43,7 @@ public class BlogController {
     public ResponseEntity<?> getAllBlogs(@PathVariable int page) {
         try {
             PageableCoreBlogs pageableCoreBlogs = blogService.getAllBlogs(page);
-            GetBlogsControllerResponse response = new GetBlogsControllerResponse(
-                    pageableCoreBlogs.getBlog().stream().map(blog -> new GetBlogsControllerResponse.Blog(
-                                    blog.getId(),
-                                    blog.getTitle(),
-                                    blog.getContent(),
-                                    blog.getLikes(),
-                                    blog.getDate(),
-                                    blog.getDescription(),
-                                    blogService.getBlogImageByte(blog.getCoverImgUrl()),
-                                    blog.getComments(),
-                                    blog.getUser().getId().toString(),
-                                    blogService.getBlogAuthorImageByte(blog.getUser().getId())
-                            )
-                    ).collect(Collectors.toList()),
-                    pageableCoreBlogs.getTotal(),
-                    pageableCoreBlogs.getCurrent()
-            );
+            GetBlogsControllerResponse response = getResponse(pageableCoreBlogs);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -73,9 +55,18 @@ public class BlogController {
         return blogService.getBlog(blogId);
     }
 
-    @GetMapping("/{userId}")
-    public Page<Blog> getAllBlogsForUser(@PathVariable Long userId,Pageable pageable){
-        return blogService.getAllBlogsForUser(userId,pageable);
+    @PostMapping("/getUserBlogs")
+    public ResponseEntity<?> getAllBlogsForUser(@RequestBody GetBlogsControllerRequest request) {
+        try {
+            PageableCoreBlogs pageableCoreBlogs = blogService.getAllBlogsForUser(
+                    Long.parseLong(request.getUserId()),
+                    request.getPage()
+            );
+            GetBlogsControllerResponse response = getResponse(pageableCoreBlogs);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
     @PutMapping("/{blogId}")
@@ -96,5 +87,25 @@ public class BlogController {
     @PutMapping("/unlike/{blogId}")
     public Blog doUnLike(@PathVariable Long blogId){
         return blogService.doUnLike(blogId);
+    }
+
+    public GetBlogsControllerResponse getResponse(PageableCoreBlogs pageableCoreBlogs) {
+        return new GetBlogsControllerResponse(
+                pageableCoreBlogs.getBlog().stream().map(blog -> new GetBlogsControllerResponse.Blog(
+                                blog.getId(),
+                                blog.getTitle(),
+                                blog.getContent(),
+                                blog.getLikes(),
+                                blog.getDate(),
+                                blog.getDescription(),
+                                blogService.getBlogImageByte(blog.getCoverImgUrl()),
+                                blog.getComments(),
+                                blog.getUser().getId().toString(),
+                                blogService.getBlogAuthorImageByte(blog.getUser().getId())
+                        )
+                ).collect(Collectors.toList()),
+                pageableCoreBlogs.getTotal(),
+                pageableCoreBlogs.getCurrent()
+        );
     }
 }

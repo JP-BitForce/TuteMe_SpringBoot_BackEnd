@@ -1,7 +1,6 @@
 package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.PageableEntity.PageableCoreBlogs;
-import com.bitforce.tuteme.controller.FeedbackController;
 import com.bitforce.tuteme.dto.ServiceRequest.AddNewBlogRequest;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.Blog;
@@ -14,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -29,6 +27,8 @@ public class BlogService {
     private final BlogRepository blogRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService = new FileStorageService("Blogs");
+    private final StudentProfileService studentProfileService;
+    private final TutorProfileService tutorProfileService;
 
     public Blog CreateBlog(AddNewBlogRequest request) {
         String fileName = fileStorageService.storeFile(request.getFile());
@@ -68,8 +68,18 @@ public class BlogService {
         return blogRepository.findById(blogId).get();
     }
 
-    public Page<Blog> getAllBlogsForUser(Long userId,Pageable pageable) {
-        return blogRepository.findAllByUserId(userId,pageable);
+    public PageableCoreBlogs getAllBlogsForUser(Long userId,int page) {
+        Page<Blog> blogPage = blogRepository.findAllByUserId(
+                userId,
+                PageRequest.of(page, 10)
+        );
+        return new PageableCoreBlogs(
+                blogPage.get()
+                        .map(this::convertToCoreEntity)
+                        .collect(Collectors.toList()),
+                blogPage.getTotalPages(),
+                blogPage.getNumber()
+        );
     }
 
     public Blog updateBlog(Blog blog, Long blogId) {
@@ -99,8 +109,12 @@ public class BlogService {
 
     @SneakyThrows
     public byte[] getBlogImageByte(String url){
-        String[] filename = url.trim().split("http://localhost:8080/api/blog/uploads/Blogs/");
-        return fileStorageService.convert(filename[1]);
+        if(url != null) {
+            String[] filename = url.trim().split("http://localhost:8080/api/blog/uploads/Blogs/");
+            return fileStorageService.convert(filename[1]);
+        } else {
+            return null;
+        }
     }
 
     @SneakyThrows
@@ -116,10 +130,11 @@ public class BlogService {
             String[] filename;
             if (user.getType().equals("student")) {
                 filename = imgUrl.trim().split("http://localhost:8080/api/student/profile/uploads/profilePicture/student/");
+                return studentProfileService.getImageByte(filename[1]);
             } else {
-                filename = imgUrl.trim().split("http://localhost:8080/api/blog/uploads/profilePicture/tutor/");
+                filename = imgUrl.trim().split("http://localhost:8080/api/tutor/profile/uploads/profilePicture/tutor/");
+                return tutorProfileService.getImageByte(filename[1]);
             }
-            return fileStorageService.convert(filename[1]);
         } else {
             return null;
         }
