@@ -1,13 +1,17 @@
 package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.PageableEntity.PageableCoreBlogs;
-import com.bitforce.tuteme.dto.ControllerResponse.GetBlogsControllerResponse;
+import com.bitforce.tuteme.controller.FeedbackController;
 import com.bitforce.tuteme.dto.ServiceRequest.AddNewBlogRequest;
+import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.Blog;
 import com.bitforce.tuteme.model.User;
 import com.bitforce.tuteme.repository.BlogRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +24,7 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 public class BlogService {
+    private final Logger log = LoggerFactory.getLogger(BlogService.class);
 
     private final BlogRepository blogRepository;
     private final UserRepository userRepository;
@@ -90,6 +95,34 @@ public class BlogService {
         Blog blog = blogRepository.findById(blogId).get();
         blog.setLikes(blog.getLikes()-1);
         return blogRepository.save(blog);
+    }
+
+    @SneakyThrows
+    public byte[] getBlogImageByte(String url){
+        String[] filename = url.trim().split("http://localhost:8080/api/blog/uploads/Blogs/");
+        return fileStorageService.convert(filename[1]);
+    }
+
+    @SneakyThrows
+    public byte[] getBlogAuthorImageByte(Long authorId) {
+        boolean exist = userRepository.findById(authorId).isPresent();
+        if (!exist) {
+            log.error("user not found for id: {}", authorId);
+            throw new EntityNotFoundException("USER_NOT_FOUND");
+        }
+        User user = userRepository.findById(authorId).get();
+        String imgUrl = user.getImageUrl();
+        if (imgUrl != null) {
+            String[] filename;
+            if (user.getType().equals("student")) {
+                filename = imgUrl.trim().split("http://localhost:8080/api/student/profile/uploads/profilePicture/student/");
+            } else {
+                filename = imgUrl.trim().split("http://localhost:8080/api/blog/uploads/profilePicture/tutor/");
+            }
+            return fileStorageService.convert(filename[1]);
+        } else {
+            return null;
+        }
     }
 
     public Blog convertToCoreEntity(Blog blog) {

@@ -1,17 +1,10 @@
 package com.bitforce.tuteme.dto.ControllerResponse;
 
 import com.bitforce.tuteme.model.Comment;
-import com.bitforce.tuteme.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.persistence.Lob;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,8 +27,9 @@ public class GetBlogsControllerResponse {
         private Integer likes;
         private LocalDateTime date;
         private String description;
-        private String coverImgUrl;
+        private byte[] coverImg;
         private List<Comment> comments;
-        private User user;
+        private String authorId;
+        private byte[] authorImg;
     }
 }
