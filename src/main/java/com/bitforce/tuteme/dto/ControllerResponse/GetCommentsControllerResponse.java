@@ -1,5 +1,6 @@
 package com.bitforce.tuteme.dto.ControllerResponse;
 
+import com.bitforce.tuteme.dto.ServiceResponse.ReplyResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,18 +26,6 @@ public class GetCommentsControllerResponse {
         private String comment;
         private LocalDateTime date;
         private byte[] authorImg;
-        private List<Reply> replyList;
-
-        @Data
-        @NoArgsConstructor
-        @AllArgsConstructor
-        public static class Reply {
-            private Long id;
-            private Long authorId;
-            private String author;
-            private String reply;
-            private LocalDateTime date;
-            private byte[] authorImg;
-        }
+        private List<ReplyResponse> replyList;
     }
 }

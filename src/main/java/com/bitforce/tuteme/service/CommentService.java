@@ -2,6 +2,7 @@ package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.dto.ControllerResponse.GetCommentsControllerResponse;
 import com.bitforce.tuteme.dto.ServiceRequest.AddCommentReplyRequest;
+import com.bitforce.tuteme.dto.ServiceResponse.ReplyResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.Blog;
 import com.bitforce.tuteme.model.Comment;
@@ -15,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -35,15 +37,27 @@ public class CommentService {
     private final UserRepository userRepository;
     private final CommentReplyRepository commentReplyRepository;
 
-    public Comment addComment(Comment newComment,Long blogId) {
-        Comment comment = new Comment();
-        comment.setBlogComment(newComment.getBlogComment());
-        comment.setDate(LocalDateTime.now());
-        comment.setUser(newComment.getUser());
-       Comment savedComment= commentRepository.save(comment);
+    public Comment addComment(String userId, String blogId, String commentMsg) throws EntityNotFoundException {
+        Long user_Id = Long.parseLong(userId);
+        if (!userRepository.existsById(user_Id)) {
+            log.error("User not found id: {}", userId);
+            throw new EntityNotFoundException("USER_NOT_FOUND");
+        }
 
-        Blog blog =blogRepository.findById(blogId).get();
-        List<Comment> comments =blog.getComments();
+        Long blog_Id = Long.parseLong(blogId);
+        Blog blog = blogService.getBlog(blog_Id);
+        if (blog == null) {
+            log.error("Blog not found id: {}", blogId);
+            throw new EntityNotFoundException("BLOG_NOT_FOUND");
+        }
+
+        Comment comment = new Comment();
+        comment.setBlogComment(commentMsg);
+        comment.setDate(LocalDateTime.now());
+        comment.setUser(userRepository.findById(user_Id).get());
+        Comment savedComment = commentRepository.save(comment);
+
+        List<Comment> comments = blog.getComments();
         comments.add(savedComment);
         blog.setComments(comments);
         blogRepository.save(blog);
@@ -69,7 +83,7 @@ public class CommentService {
         return "Comment deleted successfully....";
     }
 
-    public void addCommentReply(AddCommentReplyRequest request) throws EntityNotFoundException {
+    public ReplyResponse addCommentReply(AddCommentReplyRequest request) throws EntityNotFoundException {
         Long userId = Long.parseLong(request.getUserId());
         if (!userRepository.findById(userId).isPresent()) {
             log.error("User not found id: {}", userId);
@@ -98,9 +112,18 @@ public class CommentService {
                 .user(user)
                 .build();
         CommentReply commentReply = commentReplyRepository.save(commentReplyEntity);
-        List<CommentReply> commentReplyList = new ArrayList<>();
+        List<CommentReply> commentReplyList = comment.getCommentReply();
         commentReplyList.add(commentReply);
         comment.setCommentReply(commentReplyList);
+        commentRepository.save(comment);
+        return new ReplyResponse(
+                commentReply.getId(),
+                userId,
+                getAuthorName(user),
+                commentReply.getReply(),
+                commentReply.getDate(),
+                getAuthorImgSource(user)
+        );
     }
 
     public GetCommentsControllerResponse getComments(Long blogId) throws EntityNotFoundException {
@@ -122,7 +145,7 @@ public class CommentService {
                         comment.getBlogComment(),
                         comment.getDate(),
                         getAuthorImgSource(comment.getUser()),
-                        comment.getCommentReply().stream().map(reply -> new GetCommentsControllerResponse.Comment.Reply(
+                        comment.getCommentReply().stream().map(reply -> new ReplyResponse(
                                 reply.getId(),
                                 reply.getUser().getId(),
                                 getAuthorName(reply.getUser()),

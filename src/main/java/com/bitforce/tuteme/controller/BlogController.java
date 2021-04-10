@@ -6,6 +6,7 @@ import com.bitforce.tuteme.dto.ControllerRequest.GetBlogsControllerRequest;
 import com.bitforce.tuteme.dto.ControllerResponse.GetBlogsControllerResponse;
 import com.bitforce.tuteme.dto.ServiceRequest.AddNewBlogRequest;
 import com.bitforce.tuteme.model.Blog;
+import com.bitforce.tuteme.model.User;
 import com.bitforce.tuteme.service.BlogService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -101,11 +102,16 @@ public class BlogController {
                                 blogService.getBlogImageByte(blog.getCoverImgUrl()),
                                 blog.getComments(),
                                 blog.getUser().getId().toString(),
-                                blogService.getBlogAuthorImageByte(blog.getUser().getId())
+                                blogService.getBlogAuthorImageByte(blog.getUser().getId()),
+                                getAuthorName(blog.getUser())
                         )
                 ).collect(Collectors.toList()),
                 pageableCoreBlogs.getTotal(),
                 pageableCoreBlogs.getCurrent()
         );
+    }
+
+    public String getAuthorName(User user) {
+        return user.getFirstName() + " " + user.getLastName();
     }
 }
