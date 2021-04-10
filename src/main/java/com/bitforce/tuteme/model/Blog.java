@@ -26,6 +26,7 @@ public class Blog {
 
     private LocalDateTime date;
 
+    @Lob
     private String description;
 
     private String coverImgUrl;

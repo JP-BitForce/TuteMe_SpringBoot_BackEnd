@@ -31,5 +31,6 @@ public class GetBlogsControllerResponse {
         private List<Comment> comments;
         private String authorId;
         private byte[] authorImg;
+        private String author;
     }
 }

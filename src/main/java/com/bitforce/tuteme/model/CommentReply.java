@@ -1,28 +1,28 @@
 package com.bitforce.tuteme.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Data
+@Builder
 @NoArgsConstructor
-public class Comment {
+@AllArgsConstructor
+public class CommentReply {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     @Lob
-    private String blogComment;
+    private String reply;
 
     private LocalDateTime date;
 
-    @ManyToOne
+    @OneToOne
     private User user;
-
-    @OneToMany
-    private List<CommentReply> commentReply;
 }
