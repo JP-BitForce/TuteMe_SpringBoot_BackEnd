@@ -1,5 +1,6 @@
 package com.bitforce.tuteme.controller;
 
+import com.bitforce.tuteme.dto.CourseTutorDTO;
 import com.bitforce.tuteme.model.Course;
 import com.bitforce.tuteme.service.CourseService;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Optional;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -48,5 +50,10 @@ public class CourseController {
     @GetMapping(value = "uploads/courses/{filename}",produces = MediaType.IMAGE_JPEG_VALUE)
     public byte[] getImageResource(@PathVariable String filename) {
         return courseService.getImageByte(filename);
+    }
+
+    @GetMapping("/tutors")
+    public List<CourseTutorDTO> getAllTutors(){
+        return courseService.getAllTutors();
     }
 }
