@@ -6,7 +6,6 @@ import com.bitforce.tuteme.dto.ChangePasswordDTO;
 import com.bitforce.tuteme.dto.LoginRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.AuthenticationResponse;
 import com.bitforce.tuteme.dto.SignUpRequest;
-import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.Student;
 import com.bitforce.tuteme.model.Tutor;
 import com.bitforce.tuteme.model.User;
@@ -16,7 +15,6 @@ import com.bitforce.tuteme.repository.TutorRepository;
 import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import net.bytebuddy.utility.RandomString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -31,6 +29,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Random;
 
 @Service
 @AllArgsConstructor
@@ -136,7 +135,12 @@ public class AuthService {
     public String forgotPassword(String email) {
         if (userAuthRepository.existsByEmail(email))
         {
-            String passwordResetKey = RandomString.make(6);
+            Random random = new Random();
+            String passwordResetKey = random.ints(48, 122 + 1)
+                    .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
+                    .limit(6)
+                    .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                    .toString();
             UserAuth userAuth = userAuthRepository.findByEmail(email).get();
             userAuth.setPasswordResetKey(passwordResetKey);
             userAuthRepository.save(userAuth);

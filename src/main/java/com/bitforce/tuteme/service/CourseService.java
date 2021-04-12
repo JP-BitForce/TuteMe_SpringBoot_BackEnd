@@ -1,5 +1,6 @@
 package com.bitforce.tuteme.service;
 
+import com.bitforce.tuteme.dto.CourseTutorDTO;
 import com.bitforce.tuteme.model.Course;
 import com.bitforce.tuteme.repository.CourseRepository;
 import lombok.AllArgsConstructor;
@@ -14,6 +15,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -63,5 +66,20 @@ public class CourseService {
 
     public byte[] getImageByte(String filename) throws IOException {
         return fileStorageService.convert(filename);
+    }
+
+    public List<CourseTutorDTO> getAllTutors() {
+        List<CourseTutorDTO> courseTutorDTOS = new ArrayList<>();
+        List<Course> courses = courseRepository.findAll();
+        for(Course course : courses){
+            CourseTutorDTO courseTutorDTO = new CourseTutorDTO();
+            courseTutorDTO.setId(course.getTutor().getId());
+            courseTutorDTO.setFirstName(course.getTutor().getUser().getFirstName());
+            courseTutorDTO.setLastName(course.getTutor().getUser().getLastName());
+
+            courseTutorDTOS.add(courseTutorDTO);
+        }
+
+        return courseTutorDTOS;
     }
 }
