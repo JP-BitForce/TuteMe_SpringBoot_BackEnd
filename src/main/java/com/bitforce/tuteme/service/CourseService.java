@@ -5,6 +5,7 @@ import com.bitforce.tuteme.dto.CourseTutorDTO;
 import com.bitforce.tuteme.model.Course;
 import com.bitforce.tuteme.repository.CourseRepository;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -50,12 +51,7 @@ public class CourseService {
             List<CourseDTO>  courseDTOS = new ArrayList<>();
             for (Course course : courses){
                 CourseDTO courseDTO = new CourseDTO();
-                courseDTO.setId(course.getId());
-                courseDTO.setName(course.getName());
-                courseDTO.setDescription(course.getDescription());
-                courseDTO.setImageUrl(course.getImageUrl());
-                courseDTO.setRating(course.getRating());
-                courseDTO.setPrice(course.getPrice());
+                BeanUtils.copyProperties(course,courseDTO);
                 courseDTO.setCategoryId(course.getCourseCategory().getId());
                 courseDTO.setCategoryName(course.getCourseCategory().getCategory());
                 courseDTO.setTutorId(course.getTutor().getId());
@@ -111,5 +107,15 @@ public class CourseService {
         }
 
         return courseTutorDTOS;
+    }
+
+    @SneakyThrows
+    public byte[] getCourseImageByte(String url){
+        if(url != null) {
+            String[] filename = url.trim().split("http://localhost:8080/api/courses/uploads/courses/");
+            return fileStorageService.convert(filename[1]);
+        } else {
+            return null;
+        }
     }
 }
