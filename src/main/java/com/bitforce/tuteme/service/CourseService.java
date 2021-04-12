@@ -2,10 +2,12 @@ package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.dto.CourseDTO;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
-import com.bitforce.tuteme.model.Course;
+import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
+import com.bitforce.tuteme.model.*;
+import com.bitforce.tuteme.repository.CourseLevelRespository;
+import com.bitforce.tuteme.repository.CoursePriceCategoryRepository;
 import com.bitforce.tuteme.repository.CourseRepository;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -27,6 +30,9 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final FileStorageService fileStorageService = new FileStorageService("Courses");
+    private final CourseCategoryService courseCategoryService;
+    private final CourseLevelRespository courseLevelRespository;
+    private final CoursePriceCategoryRepository coursePriceCategoryRepository;
 
     public Course createCourse(MultipartFile file,Course course) {
         String fileName = fileStorageService.storeFile(file);
