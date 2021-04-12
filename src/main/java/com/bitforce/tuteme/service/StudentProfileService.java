@@ -22,6 +22,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,7 @@ public class StudentProfileService {
 
         BeanUtils.copyProperties(user,studentProfileDTO);
         BeanUtils.copyProperties(student,studentProfileDTO);
+        studentProfileDTO.setId(student.getId());
         studentProfileDTO.setEmail(userAuth.getEmail());
         studentProfileDTO.setCourseCount(courseCount);
         studentProfileDTO.setTutorCount(tutorsCount);
@@ -73,8 +75,24 @@ public class StudentProfileService {
             Page<Student> studentPage = studentRepository.findAll(paging);
             List<Student> students = studentPage.getContent();
 
+            List<StudentProfileDTO> studentProfileDTOS = new ArrayList<>();
+            for (Student student : students){
+                StudentProfileDTO studentProfileDTO = new StudentProfileDTO();
+                BeanUtils.copyProperties(student,studentProfileDTO);
+                User user =userRepository.findById(student.getUser().getId()).get();
+                UserAuth userAuth = userAuthRepository.findByUserId(student.getUser().getId());
+                BeanUtils.copyProperties(user,studentProfileDTO);
+                studentProfileDTO.setId(student.getId());
+                studentProfileDTO.setEmail(userAuth.getEmail());
+                studentProfileDTO.setCourseCount(courseEnrollmentRepository.findAllCourseCountByStudentId(student.getId()));
+                studentProfileDTO.setTutorCount(courseEnrollmentRepository.findAllTutorsCountByStudentId(student.getId()));
+
+                studentProfileDTOS.add(studentProfileDTO);
+
+            }
+
             Map<String, Object> response = new HashMap<>();
-            response.put("data", students);
+            response.put("data", studentProfileDTOS);
             response.put("current", studentPage.getNumber());
             response.put("total", studentPage.getTotalPages());
 

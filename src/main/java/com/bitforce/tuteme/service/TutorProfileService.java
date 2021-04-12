@@ -21,6 +21,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,8 +68,21 @@ public class TutorProfileService {
             Page<Tutor> tutorPage = tutorRepository.findAll(paging);
             List<Tutor> tutors = tutorPage.getContent();
 
+            List<TutorProfileDTO> tutorProfileDTOS = new ArrayList<>();
+            for (Tutor tutor:tutors){
+                TutorProfileDTO tutorProfileDTO = new TutorProfileDTO();
+                User user =userRepository.findById(tutor.getUser().getId()).get();
+                UserAuth userAuth = userAuthRepository.findByUserId(tutor.getUser().getId());
+                BeanUtils.copyProperties(tutor,tutorProfileDTO);
+                BeanUtils.copyProperties(user,tutorProfileDTO);
+                tutorProfileDTO.setId(tutor.getId());
+                tutorProfileDTO.setEmail(userAuth.getEmail());
+
+                tutorProfileDTOS.add(tutorProfileDTO);
+            }
+
             Map<String, Object> response = new HashMap<>();
-            response.put("data", tutors);
+            response.put("data", tutorProfileDTOS);
             response.put("current", tutorPage.getNumber());
             response.put("total", tutorPage.getTotalPages());
 

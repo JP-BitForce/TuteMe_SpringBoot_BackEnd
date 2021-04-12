@@ -1,28 +1,24 @@
-package com.bitforce.tuteme.model;
+package com.bitforce.tuteme.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
 import java.math.BigDecimal;
 
-@Entity
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
-public class Course {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+public class CourseDTO {
     private Long id;
     private String name;
-    @Lob
     private String description;
     private String imageUrl;
     private Double rating;
     private String duration;
     private BigDecimal price;
-
-    @ManyToOne
-    private Tutor tutor;
-    @ManyToOne
-    private CourseCategory courseCategory;
+    private Long tutorId;
+    private String tutorName;
+    private Long categoryId;
+    private String categoryName;
 }
