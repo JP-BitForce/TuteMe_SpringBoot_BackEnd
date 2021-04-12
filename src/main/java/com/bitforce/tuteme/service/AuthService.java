@@ -6,6 +6,7 @@ import com.bitforce.tuteme.dto.ChangePasswordDTO;
 import com.bitforce.tuteme.dto.LoginRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.AuthenticationResponse;
 import com.bitforce.tuteme.dto.SignUpRequest;
+import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.Student;
 import com.bitforce.tuteme.model.Tutor;
 import com.bitforce.tuteme.model.User;
@@ -15,6 +16,7 @@ import com.bitforce.tuteme.repository.TutorRepository;
 import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -29,7 +31,6 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.Random;
 
 @Service
 @AllArgsConstructor
@@ -57,7 +58,7 @@ public class AuthService {
             String jwt = jwtUtil.generate(authentication);
             userAuth.setLoginAttempt(0);
             userAuthRepository.save(userAuth);
-            
+
             Long profileId = null;
             Long userId = userAuth.getUser().getId();
             if (userAuth.getRole().equals("ROLE_STUDENT")) {
@@ -80,7 +81,7 @@ public class AuthService {
         } catch (Exception e) {
             userAuth.setLoginAttempt(userAuth.getLoginAttempt() + 1);
             userAuthRepository.save(userAuth);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Credentials are Incorrect");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Credentials are Incorrect");
         }
     }
 
@@ -120,39 +121,38 @@ public class AuthService {
     }
 
     public ResponseEntity<?> changePassword(ChangePasswordDTO changePasswordDTO, Long userId) {
-        UserAuth userAuth =userAuthRepository.findByUserId(userId);
-        if (passwordEncoder.matches(changePasswordDTO.getOldPassword(),userAuth.getPassword()))
-        {
+        UserAuth userAuth = userAuthRepository.findByUserId(userId);
+        if (passwordEncoder.matches(changePasswordDTO.getOldPassword(), userAuth.getPassword())) {
             userAuth.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
             userAuthRepository.save(userAuth);
             return ResponseEntity.ok(new ApiResponse(true, "User Password changed successfully"));
-        }
-        else {
-            return new  ResponseEntity(new ApiResponse(false, "User password is Incorrect"),HttpStatus.BAD_REQUEST);
+        } else {
+            return new ResponseEntity(new ApiResponse(false, "User password is Incorrect"), HttpStatus.BAD_REQUEST);
         }
     }
 
-    public String forgotPassword(String email) {
-        if (userAuthRepository.existsByEmail(email))
-        {
-            Random random = new Random();
-            String passwordResetKey = random.ints(48, 122 + 1)
-                    .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
-                    .limit(6)
-                    .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                    .toString();
+    public String forgotPassword(String email) throws EntityNotFoundException {
+        if (userAuthRepository.findByEmail(email).isPresent()) {
+            String passwordResetKey = RandomStringUtils.randomAlphanumeric(6);
             UserAuth userAuth = userAuthRepository.findByEmail(email).get();
             userAuth.setPasswordResetKey(passwordResetKey);
             userAuthRepository.save(userAuth);
 
-            emailService.send(email, emailService.buildEmail(userAuth.getUser().getFirstName(), passwordResetKey));
-            return passwordResetKey;
+            emailService.send(
+                    email,
+                    emailService.buildEmail(
+                            userAuth.getUser().getFirstName(),
+                            passwordResetKey
+                    )
+            );
+            return "reset code sent successfully";
+        } else {
+            log.error("invalid email address provided, email: {}", email);
+            throw new EntityNotFoundException("INVALID_EMAIL");
         }
-        else
-            return "Invalid email address....";
     }
 
-    public boolean verifyCode(String code,String email) {
+    public boolean verifyCode(String code, String email) {
         UserAuth userAuth = userAuthRepository.findByEmail(email).get();
         return userAuth.getPasswordResetKey().equals(code);
     }
