@@ -77,4 +77,8 @@ public class CourseCategoryService {
     public byte[] getImageByte(String filename) throws IOException {
         return fileStorageService.convert(filename);
     }
+
+    public List<CourseCategory> getCourseCategories() {
+        return courseCategoryRepository.findAll();
+    }
 }

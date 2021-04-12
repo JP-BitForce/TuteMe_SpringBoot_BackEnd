@@ -1,7 +1,10 @@
 package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.dto.CourseTutorDTO;
-import com.bitforce.tuteme.model.Course;
+import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
+import com.bitforce.tuteme.model.*;
+import com.bitforce.tuteme.repository.CourseLevelRespository;
+import com.bitforce.tuteme.repository.CoursePriceCategoryRepository;
 import com.bitforce.tuteme.repository.CourseRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -18,6 +21,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -25,8 +29,11 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final FileStorageService fileStorageService = new FileStorageService("Courses");
+    private final CourseCategoryService courseCategoryService;
+    private final CourseLevelRespository courseLevelRespository;
+    private final CoursePriceCategoryRepository coursePriceCategoryRepository;
 
-    public Course createCourse(MultipartFile file,Course course) {
+    public Course createCourse(MultipartFile file, Course course) {
         String fileName = fileStorageService.storeFile(file);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -36,11 +43,11 @@ public class CourseService {
 
         Course course1 = new Course();
         course.setImageUrl(fileDownloadUri);
-        BeanUtils.copyProperties(course,course1);
+        BeanUtils.copyProperties(course, course1);
         return courseRepository.save(course);
     }
 
-    public ResponseEntity<Map<String, Object>>  getAllCourses(int page) {
+    public ResponseEntity<Map<String, Object>> getAllCourses(int page) {
         try {
             Pageable paging = PageRequest.of(page, 10);
             Page<Course> coursePage = courseRepository.findAll(paging);
@@ -52,7 +59,7 @@ public class CourseService {
             response.put("total", coursePage.getTotalPages());
 
             return new ResponseEntity<>(response, HttpStatus.OK);
-        }catch (Exception e) {
+        } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -62,9 +69,9 @@ public class CourseService {
     }
 
     public Course updateCourse(Course course, Long courseId) {
-        Course course1 =courseRepository.findById(courseId).get();
+        Course course1 = courseRepository.findById(courseId).get();
         course.setImageUrl(course1.getImageUrl());
-        BeanUtils.copyProperties(course,course1);
+        BeanUtils.copyProperties(course, course1);
         return course;
     }
 
@@ -74,7 +81,7 @@ public class CourseService {
     }
 
     public ResponseEntity<Resource> getImageResource(String filename, HttpServletRequest request) {
-        return fileStorageService.loadFileAsResource(filename,request);
+        return fileStorageService.loadFileAsResource(filename, request);
     }
 
     public byte[] getImageByte(String filename) throws IOException {
@@ -84,7 +91,7 @@ public class CourseService {
     public List<CourseTutorDTO> getAllTutors() {
         List<CourseTutorDTO> courseTutorDTOS = new ArrayList<>();
         List<Course> courses = courseRepository.findAll();
-        for(Course course : courses){
+        for (Course course : courses) {
             CourseTutorDTO courseTutorDTO = new CourseTutorDTO();
             courseTutorDTO.setId(course.getTutor().getId());
             courseTutorDTO.setFirstName(course.getTutor().getUser().getFirstName());
@@ -94,5 +101,36 @@ public class CourseService {
         }
 
         return courseTutorDTOS;
+    }
+
+    public GetFilterCategoriesResponse getFilterCategories() {
+        List<CourseCategory> categoryList = courseCategoryService.getCourseCategories();
+        List<String> courseCategoryList = new ArrayList<>();
+        for (CourseCategory courseCategory: categoryList) {
+            courseCategoryList.add(courseCategory.getCategory());
+        }
+
+        List<CourseLevel> levelList = courseLevelRespository.findAll();
+        List<String> courseLevelList = new ArrayList<>();
+        for(CourseLevel courseLevel: levelList) {
+            courseLevelList.add(courseLevel.getCategory());
+        }
+
+        List<CoursePriceCategory> priceCategoryList = coursePriceCategoryRepository.findAll();
+        List<Course> courses = courseRepository.findAll();
+        List<String> tutorList = new ArrayList<>();
+        for (Course course : courses) {
+            tutorList.add(getUserFullName(course.getTutor().getUser()));
+        }
+        return new GetFilterCategoriesResponse(
+                courseCategoryList,
+                tutorList.stream().distinct().collect(Collectors.toList()),
+                courseLevelList,
+                priceCategoryList
+        );
+    }
+
+    public String getUserFullName(User user) {
+        return user.getFirstName() + " " + user.getLastName();
     }
 }
