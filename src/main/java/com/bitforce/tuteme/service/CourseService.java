@@ -108,4 +108,35 @@ public class CourseService {
 
         return courseTutorDTOS;
     }
+
+    public GetFilterCategoriesResponse getFilterCategories() {
+        List<CourseCategory> categoryList = courseCategoryService.getCourseCategories();
+        List<String> courseCategoryList = new ArrayList<>();
+        for (CourseCategory courseCategory: categoryList) {
+            courseCategoryList.add(courseCategory.getCategory());
+        }
+
+        List<CourseLevel> levelList = courseLevelRespository.findAll();
+        List<String> courseLevelList = new ArrayList<>();
+        for(CourseLevel courseLevel: levelList) {
+            courseLevelList.add(courseLevel.getCategory());
+        }
+
+        List<CoursePriceCategory> priceCategoryList = coursePriceCategoryRepository.findAll();
+        List<Course> courses = courseRepository.findAll();
+        List<String> tutorList = new ArrayList<>();
+        for (Course course : courses) {
+            tutorList.add(getUserFullName(course.getTutor().getUser()));
+        }
+        return new GetFilterCategoriesResponse(
+                courseCategoryList,
+                tutorList.stream().distinct().collect(Collectors.toList()),
+                courseLevelList,
+                priceCategoryList
+        );
+    }
+
+    public String getUserFullName(User user) {
+        return user.getFirstName() + " " + user.getLastName();
+    }
 }
