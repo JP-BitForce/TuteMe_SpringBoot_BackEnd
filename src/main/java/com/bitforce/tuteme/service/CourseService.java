@@ -48,8 +48,8 @@ public class CourseService {
 
             Map<String, Object> response = new HashMap<>();
             response.put("data", courses);
-            response.put("currentPage", coursePage.getNumber());
-            response.put("totalPages", coursePage.getTotalPages());
+            response.put("current", coursePage.getNumber());
+            response.put("total", coursePage.getTotalPages());
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         }catch (Exception e) {

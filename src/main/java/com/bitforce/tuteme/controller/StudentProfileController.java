@@ -2,16 +2,16 @@ package com.bitforce.tuteme.controller;
 
 
 import com.bitforce.tuteme.dto.StudentProfileDTO;
-import com.bitforce.tuteme.model.Student;
 import com.bitforce.tuteme.model.User;
 import com.bitforce.tuteme.service.StudentProfileService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @AllArgsConstructor
@@ -31,9 +31,9 @@ public class StudentProfileController {
         return studentProfileService.getStudentProfile(userId);
     }
 
-    @GetMapping()
-    public Page<Student> getTutorProfile(Pageable pageable){
-        return studentProfileService.getStudentProfiles(pageable);
+    @GetMapping("getAll/{page}")
+    public ResponseEntity<Map<String, Object>> getTutorProfile(@PathVariable int page){
+        return studentProfileService.getStudentProfiles(page);
     }
 
     @RequestMapping(value = "upload/{userId}", headers = "Content-Type= multipart/form-data", method = RequestMethod.POST)

@@ -6,8 +6,15 @@ import com.bitforce.tuteme.repository.CourseRepository;
 import com.bitforce.tuteme.repository.StudentRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
@@ -25,8 +32,21 @@ public class CourseEnrollmentService {
         return courseEnrollment;
     }
 
-    public Page<CourseEnrollment> getAllEnrolledCoursesForStudent(Long studentId,Pageable pageable) {
-        return courseEnrollmentRepository.findAllByStudentId(studentId,pageable);
+    public ResponseEntity<Map<String, Object>> getAllEnrolledCoursesForStudent(Long studentId, int page) {
+        try {
+            Pageable paging = PageRequest.of(page, 10);
+            Page<CourseEnrollment> coursePage = courseEnrollmentRepository.findAllByStudentId(studentId,paging);
+            List<CourseEnrollment> courseEnrollments = coursePage.getContent();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", courseEnrollments);
+            response.put("current", coursePage.getNumber());
+            response.put("total", coursePage.getTotalPages());
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     public String unEnrollToCourse(Long enrollmentId) {

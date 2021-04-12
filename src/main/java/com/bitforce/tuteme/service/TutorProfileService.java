@@ -11,7 +11,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +21,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
@@ -56,8 +61,21 @@ public class TutorProfileService {
         return tutorProfileDTO;
     }
 
-    public Page<Tutor> getTutorProfiles(Pageable pageable) {
-        return tutorRepository.findAll(pageable);
+    public ResponseEntity<Map<String, Object>> getTutorProfiles(int page) {
+        try {
+            Pageable paging = PageRequest.of(page, 10);
+            Page<Tutor> tutorPage = tutorRepository.findAll(paging);
+            List<Tutor> tutors = tutorPage.getContent();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", tutors);
+            response.put("current", tutorPage.getNumber());
+            response.put("total", tutorPage.getTotalPages());
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     public User updateTutorProfilePicture(MultipartFile file, Long userId) {

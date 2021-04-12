@@ -4,12 +4,12 @@ import com.bitforce.tuteme.model.CourseCategory;
 import com.bitforce.tuteme.service.CourseCategoryService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
 import java.util.Optional;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -25,9 +25,9 @@ public class CourseCategoryController {
         return courseCategoryService.createCategory(file,courseCategory);
     }
 
-    @GetMapping
-    public Page<CourseCategory> getAllCourseCategory(Pageable pageable){
-        return courseCategoryService.getAllCourseCategory(pageable);
+    @GetMapping("/getAll/{page}")
+    public ResponseEntity<Map<String, Object>> getAllCourseCategory(@PathVariable int page){
+        return courseCategoryService.getAllCourseCategory(page);
     }
 
     @GetMapping("/{categoryId}")
