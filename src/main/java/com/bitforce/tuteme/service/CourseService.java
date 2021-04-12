@@ -7,7 +7,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,9 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -40,8 +40,21 @@ public class CourseService {
         return courseRepository.save(course);
     }
 
-    public Page<Course> getAllCourses(Pageable pageable) {
-        return courseRepository.findAll(pageable);
+    public ResponseEntity<Map<String, Object>>  getAllCourses(int page) {
+        try {
+            Pageable paging = PageRequest.of(page, 10);
+            Page<Course> coursePage = courseRepository.findAll(paging);
+            List<Course> courses = coursePage.getContent();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", courses);
+            response.put("currentPage", coursePage.getNumber());
+            response.put("totalPages", coursePage.getTotalPages());
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     public Optional<Course> getCourse(Long courseId) {
