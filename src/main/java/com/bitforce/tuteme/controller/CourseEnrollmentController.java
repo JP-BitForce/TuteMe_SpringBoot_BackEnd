@@ -3,9 +3,10 @@ package com.bitforce.tuteme.controller;
 import com.bitforce.tuteme.model.CourseEnrollment;
 import com.bitforce.tuteme.service.CourseEnrollmentService;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @AllArgsConstructor
@@ -19,9 +20,9 @@ public class CourseEnrollmentController {
         return courseEnrollmentService.enrollToCourse(courseId,studentId);
     }
 
-    @GetMapping("/{studentId}")
-    public Page<CourseEnrollment> getAllEnrolledCoursesForStudent(@PathVariable Long studentId, Pageable pageable){
-        return courseEnrollmentService.getAllEnrolledCoursesForStudent(studentId,pageable);
+    @GetMapping("/{studentId}/{page}")
+    public ResponseEntity<Map<String, Object>> getAllEnrolledCoursesForStudent(@PathVariable Long studentId, @PathVariable int page){
+        return courseEnrollmentService.getAllEnrolledCoursesForStudent(studentId,page);
     }
 
     @DeleteMapping("/{enrollmentId}")
