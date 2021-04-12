@@ -154,10 +154,7 @@ public class AuthService {
 
     public boolean verifyCode(String code,String email) {
         UserAuth userAuth = userAuthRepository.findByEmail(email).get();
-        if (userAuth.getPasswordResetKey().equals(code))
-            return true;
-        else
-        return false;
+        return userAuth.getPasswordResetKey().equals(code);
     }
 
     public String resetPassword(String password, String email) {
