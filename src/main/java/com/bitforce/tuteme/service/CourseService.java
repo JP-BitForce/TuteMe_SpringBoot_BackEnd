@@ -1,5 +1,6 @@
 package com.bitforce.tuteme.service;
 
+import com.bitforce.tuteme.dto.CourseDTO;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
 import com.bitforce.tuteme.model.Course;
 import com.bitforce.tuteme.repository.CourseRepository;
@@ -46,8 +47,24 @@ public class CourseService {
             Page<Course> coursePage = courseRepository.findAll(paging);
             List<Course> courses = coursePage.getContent();
 
+            List<CourseDTO>  courseDTOS = new ArrayList<>();
+            for (Course course : courses){
+                CourseDTO courseDTO = new CourseDTO();
+                courseDTO.setId(course.getId());
+                courseDTO.setName(course.getName());
+                courseDTO.setDescription(course.getDescription());
+                courseDTO.setImageUrl(course.getImageUrl());
+                courseDTO.setRating(course.getRating());
+                courseDTO.setPrice(course.getPrice());
+                courseDTO.setCategoryId(course.getCourseCategory().getId());
+                courseDTO.setCategoryName(course.getCourseCategory().getCategory());
+                courseDTO.setTutorId(course.getTutor().getId());
+                courseDTO.setTutorName(course.getTutor().getUser().getFirstName() +" "+course.getTutor().getUser().getLastName());
+                courseDTOS.add(courseDTO);
+            }
+
             Map<String, Object> response = new HashMap<>();
-            response.put("data", courses);
+            response.put("data", courseDTOS);
             response.put("current", coursePage.getNumber());
             response.put("total", coursePage.getTotalPages());
 
