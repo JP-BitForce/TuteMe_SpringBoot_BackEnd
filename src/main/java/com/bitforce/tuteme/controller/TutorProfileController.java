@@ -1,14 +1,17 @@
 package com.bitforce.tuteme.controller;
 
+import com.bitforce.tuteme.dto.ServiceResponse.GetTutorsResponse;
 import com.bitforce.tuteme.dto.TutorProfileDTO;
 import com.bitforce.tuteme.model.User;
 import com.bitforce.tuteme.service.TutorProfileService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -30,8 +33,12 @@ public class TutorProfileController {
         return tutorProfileService.getTutorProfile(userId);
     }
     @GetMapping("/getAll/{page}")
-    public ResponseEntity<Map<String, Object>> getTutorProfiles(@PathVariable int page){
-        return tutorProfileService.getTutorProfiles(page);
+    public GetTutorsResponse getTutorProfiles(@PathVariable int page){
+        try {
+            return tutorProfileService.getTutorProfiles(page);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
 

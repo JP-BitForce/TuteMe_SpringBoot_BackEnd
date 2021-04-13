@@ -1,5 +1,6 @@
 package com.bitforce.tuteme.service;
 
+import com.bitforce.tuteme.dto.ServiceResponse.GetTutorsResponse;
 import com.bitforce.tuteme.dto.TutorProfileDTO;
 import com.bitforce.tuteme.model.Tutor;
 import com.bitforce.tuteme.model.User;
@@ -8,6 +9,7 @@ import com.bitforce.tuteme.repository.TutorRepository;
 import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -25,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -39,11 +42,11 @@ public class TutorProfileService {
 
         User user = userRepository.findById(userId).get();
         tutorProfileDTO.setImageUrl(user.getImageUrl());
-        BeanUtils.copyProperties(tutorProfileDTO,user);
+        BeanUtils.copyProperties(tutorProfileDTO, user);
         userRepository.save(user);
 
         Tutor tutor = tutorRepository.findByUserId(userId);
-        BeanUtils.copyProperties(tutorProfileDTO,tutor);
+        BeanUtils.copyProperties(tutorProfileDTO, tutor);
         tutorRepository.save(tutor);
 
         return tutorProfileDTO;
@@ -55,41 +58,47 @@ public class TutorProfileService {
         UserAuth userAuth = userAuthRepository.findByUserId(userId);
         Tutor tutor = tutorRepository.findByUserId(userId);
 
-        BeanUtils.copyProperties(user,tutorProfileDTO);
-        BeanUtils.copyProperties(tutor,tutorProfileDTO);
+        BeanUtils.copyProperties(user, tutorProfileDTO);
+        BeanUtils.copyProperties(tutor, tutorProfileDTO);
         tutorProfileDTO.setEmail(userAuth.getEmail());
 
         return tutorProfileDTO;
     }
 
-    public ResponseEntity<Map<String, Object>> getTutorProfiles(int page) {
-        try {
-            Pageable paging = PageRequest.of(page, 10);
-            Page<Tutor> tutorPage = tutorRepository.findAll(paging);
-            List<Tutor> tutors = tutorPage.getContent();
+    public GetTutorsResponse getTutorProfiles(int page) {
+        Pageable paging = PageRequest.of(page, 10);
+        Page<Tutor> tutorPage = tutorRepository.findAll(paging);
+        List<Tutor> tutors = tutorPage.getContent();
 
-            List<TutorProfileDTO> tutorProfileDTOS = new ArrayList<>();
-            for (Tutor tutor:tutors){
-                TutorProfileDTO tutorProfileDTO = new TutorProfileDTO();
-                User user =userRepository.findById(tutor.getUser().getId()).get();
-                UserAuth userAuth = userAuthRepository.findByUserId(tutor.getUser().getId());
-                BeanUtils.copyProperties(tutor,tutorProfileDTO);
-                BeanUtils.copyProperties(user,tutorProfileDTO);
-                tutorProfileDTO.setId(tutor.getId());
-                tutorProfileDTO.setEmail(userAuth.getEmail());
+        List<TutorProfileDTO> tutorProfileDTOS = new ArrayList<>();
+        for (Tutor tutor : tutors) {
+            TutorProfileDTO tutorProfileDTO = new TutorProfileDTO();
+            User user = userRepository.findById(tutor.getUser().getId()).get();
+            UserAuth userAuth = userAuthRepository.findByUserId(tutor.getUser().getId());
+            BeanUtils.copyProperties(tutor, tutorProfileDTO);
+            BeanUtils.copyProperties(user, tutorProfileDTO);
+            tutorProfileDTO.setId(tutor.getId());
+            tutorProfileDTO.setEmail(userAuth.getEmail());
 
-                tutorProfileDTOS.add(tutorProfileDTO);
-            }
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("data", tutorProfileDTOS);
-            response.put("current", tutorPage.getNumber());
-            response.put("total", tutorPage.getTotalPages());
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            tutorProfileDTOS.add(tutorProfileDTO);
         }
+        return new GetTutorsResponse(
+                tutors.stream().map(tutor -> new GetTutorsResponse.Tutor(
+                                tutor.getId(),
+                                tutor.getUser().getFirstName(),
+                                tutor.getUser().getFirstName(),
+                                getUserEmail(tutor.getUser()),
+                                tutor.getUser().getGender(),
+                                getImageSource(tutor.getUser().getImageUrl()),
+                                tutor.getUser().getCity(),
+                                tutor.getUser().getDistrict(),
+                                tutor.getDescription(),
+                                tutor.getRating()
+                        )
+                ).collect(Collectors.toList()),
+                tutorPage.getTotalPages(),
+                tutorPage.getNumber()
+        );
     }
 
     public User updateTutorProfilePicture(MultipartFile file, Long userId) {
@@ -107,10 +116,23 @@ public class TutorProfileService {
     }
 
     public ResponseEntity<Resource> getImageResource(String filename, HttpServletRequest request) {
-        return fileStorageService.loadFileAsResource(filename,request);
+        return fileStorageService.loadFileAsResource(filename, request);
     }
 
     public byte[] getImageByte(String filename) throws IOException {
         return fileStorageService.convert(filename);
+    }
+
+    public String getUserEmail(User user) {
+        return userAuthRepository.findByUserId(user.getId()).getEmail();
+    }
+
+    @SneakyThrows
+    public byte[] getImageSource(String url) {
+        if (url != null) {
+            String[] filename = url.trim().split("http://localhost:8080/api/tutor/profile/uploads/profilePicture/tutor/");
+            return getImageByte(filename[1]);
+        }
+        return null;
     }
 }
