@@ -1,13 +1,16 @@
 package com.bitforce.tuteme.controller;
 
+import com.bitforce.tuteme.dto.ServiceResponse.GetCourseCategoryResponse;
 import com.bitforce.tuteme.model.CourseCategory;
 import com.bitforce.tuteme.service.CourseCategoryService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 import java.util.Optional;
@@ -26,8 +29,12 @@ public class CourseCategoryController {
     }
 
     @GetMapping("/getAll/{page}")
-    public ResponseEntity<Map<String, Object>> getAllCourseCategory(@PathVariable int page){
-        return courseCategoryService.getAllCourseCategory(page);
+    public GetCourseCategoryResponse getAllCourseCategory(@PathVariable int page){
+        try {
+            return courseCategoryService.getAllCourseCategory(page);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
     @GetMapping("/{categoryId}")
