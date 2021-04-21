@@ -1,8 +1,11 @@
 package com.bitforce.tuteme.controller;
 
 import com.bitforce.tuteme.dto.ControllerRequest.AddNewEventControllerRequest;
+import com.bitforce.tuteme.dto.ControllerRequest.DeleteEventControllerRequest;
 import com.bitforce.tuteme.dto.ControllerRequest.GetEventsControllerRequest;
+import com.bitforce.tuteme.dto.ControllerRequest.UpdateEventControllerRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.AddNewEventRequest;
+import com.bitforce.tuteme.dto.ServiceRequest.UpdateEventRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetEventsResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.service.EventService;
@@ -40,7 +43,7 @@ public class EventController {
                     request.getEnd(),
                     request.getBackgroundColor()
             );
-            GetEventsResponse response =  eventService.addEvent(addNewEventRequest);
+            GetEventsResponse response = eventService.addEvent(addNewEventRequest);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (EntityNotFoundException e) {
             log.error("Unable to add new event due to bad request for given id: {}", request.getUserId());
@@ -56,10 +59,61 @@ public class EventController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> getEvents(@RequestBody GetEventsControllerRequest request) {
         try {
-            GetEventsResponse response =  eventService.getEvents(request.getUserId());
+            GetEventsResponse response = eventService.getEvents(request.getUserId());
             return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to get events due to bad request for given userId: {}", request.getUserId());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Unable to get events");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/updateEvent")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> updateEvent(@RequestBody UpdateEventControllerRequest request) {
+        try {
+            UpdateEventRequest updateEventRequest = new UpdateEventRequest(
+                    request.getUserId(),
+                    request.getEventId(),
+                    request.getTitle(),
+                    request.getDescription(),
+                    request.getStart(),
+                    request.getEnd(),
+                    request.getBackgroundColor()
+            );
+            GetEventsResponse response = eventService.updateEvent(updateEventRequest);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to update event due to bad request for given userId: {}, eventId: {}",
+                    request.getUserId(),
+                    request.getEventId()
+            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            log.error("Unable to update event");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+
+    @PostMapping(value = "/deleteEvent")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> deleteEvent(@RequestBody DeleteEventControllerRequest request) {
+        try {
+            GetEventsResponse response = eventService.deleteEvent(request.getUserId(), request.getEventId());
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to delete event due to bad request for given userId: {}, eventId: {}",
+                    request.getUserId(),
+                    request.getEventId()
+            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            log.error("Unable to delete event");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
