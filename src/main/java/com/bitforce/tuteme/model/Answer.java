@@ -7,19 +7,16 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Question {
+public class Answer {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
-    private String title;
 
     @Lob
     private String content;
@@ -28,15 +25,7 @@ public class Question {
 
     private int votes;
 
-    private boolean answered;
-
-    @OneToMany
-    private List<Tag> tags;
-
     @OneToOne
     private User user;
-
-    @OneToMany
-    private List<Answer> answers;
 
 }

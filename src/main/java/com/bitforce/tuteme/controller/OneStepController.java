@@ -84,7 +84,7 @@ public class OneStepController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> searchTagByTitle(@PathVariable String title) {
         try {
-            List<Tag> list =  oneStepService.searchTagByTitle(title);
+            List<Tag> list = oneStepService.searchTagByTitle(title);
             return new ResponseEntity<>(list, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Unable to get all question");
@@ -97,8 +97,21 @@ public class OneStepController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<?> filterTagsByAlphabet() {
         try {
-            List<Tag> list =  oneStepService.filterTagsByAlphabeticOrder();
+            List<Tag> list = oneStepService.filterTagsByAlphabeticOrder();
             return new ResponseEntity<>(list, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to get all question");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @GetMapping(value = "/filterQuestionsByType")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> filterQuestionsByType(@RequestParam String type, @RequestParam int page) {
+        try {
+            GetQuestionsPageResponse response = oneStepService.filterQuestions(type, page);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Unable to get all question");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());

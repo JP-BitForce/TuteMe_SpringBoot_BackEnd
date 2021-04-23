@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,12 +67,14 @@ public class OneStepService {
                 .tags(tagList)
                 .user(user)
                 .votes(0)
+                .answers(new ArrayList<>())
+                .answered(false)
                 .build();
 
         questionRepository.save(question);
 
-        for(Tag tag: tagList) {
-            tag.setNoOfQuestions(tag.getNoOfQuestions()+1);
+        for (Tag tag : tagList) {
+            tag.setNoOfQuestions(tag.getNoOfQuestions() + 1);
             tagRepository.save(tag);
         }
 
@@ -102,7 +105,7 @@ public class OneStepService {
                         getAuthorName(question.getUser()),
                         getAuthorImageByte(question.getUser().getId()),
                         question.getVotes(),
-                        0
+                        question.getAnswers().size()
                 )).collect(Collectors.toList()),
                 pageableQuestions.getTotal(),
                 pageableQuestions.getCurrent()
@@ -110,32 +113,82 @@ public class OneStepService {
     }
 
     public List<Tag> searchTagByTitle(String title) {
-       return tagRepository.findAllByTitleIsContaining(title);
+        return tagRepository.findAllByTitleIsContaining(title);
     }
 
     public List<Tag> filterTagsByAlphabeticOrder() {
-        return  tagRepository.findByOrderByTitleAsc();
+        return tagRepository.findByOrderByTitleAsc();
     }
 
-    public String getAuthorName(User user) {
+    public GetQuestionsPageResponse filterQuestions(String type, int page) {
+        Page<Question> questionPage;
+        switch (type) {
+            case "Unanswered":
+                questionPage = filterUnansweredQuestions(page);
+                break;
+            case "Votes":
+                questionPage = filterQuestionByVoteOrder(page);
+                break;
+            default:
+                return null;
+        }
+        PageableCoreQuestions pageableQuestions = getPageableCoreQuestions(questionPage);
+        return new GetQuestionsPageResponse(
+                pageableQuestions.getQuestions().stream().map(question -> new GetQuestionsPageResponse.Question(
+                        question.getId(),
+                        question.getTitle(),
+                        question.getContent(),
+                        question.getCreatedAt(),
+                        question.getTags(),
+                        getAuthorName(question.getUser()),
+                        getAuthorImageByte(question.getUser().getId()),
+                        question.getVotes(),
+                        question.getAnswers().size()
+                )).collect(Collectors.toList()),
+                pageableQuestions.getTotal(),
+                pageableQuestions.getCurrent()
+        );
+    }
+
+    private Page<Question> filterUnansweredQuestions(int page) {
+        return questionRepository.findAllByAnsweredEquals(
+                false,
+                PageRequest.of(page, 10)
+        );
+    }
+
+    private Page<Question> filterQuestionByVoteOrder(int page) {
+        return questionRepository.findByOrderByVotesDesc(PageRequest.of(page, 10));
+    }
+
+    private PageableCoreQuestions getPageableCoreQuestions(Page<Question> questionPage) {
+        return new PageableCoreQuestions(
+                questionPage
+                        .get()
+                        .collect(Collectors.toList()),
+                questionPage.getTotalPages(),
+                questionPage.getNumber()
+        );
+    }
+
+    private String getAuthorName(User user) {
         return user.getFirstName() + " " + user.getLastName();
     }
 
     @SneakyThrows
-    public byte[] getAuthorImageByte(Long authorId) {
+    private byte[] getAuthorImageByte(Long authorId) {
         if (!userRepository.findById(authorId).isPresent()) {
             log.error("user not found for id: {}", authorId);
             throw new EntityNotFoundException("USER_NOT_FOUND");
         }
         User user = userRepository.findById(authorId).get();
-        String imgUrl = user.getImageUrl();
-        if (imgUrl != null) {
+        if (user.getImageUrl() != null) {
             String[] filename;
             if (user.getType().equals("student")) {
-                filename = imgUrl.trim().split("http://localhost:8080/api/student/profile/uploads/profilePicture/student/");
+                filename = user.getImageUrl().trim().split("http://localhost:8080/api/student/profile/uploads/profilePicture/student/");
                 return studentProfileService.getImageByte(filename[1]);
             } else {
-                filename = imgUrl.trim().split("http://localhost:8080/api/tutor/profile/uploads/profilePicture/tutor/");
+                filename = user.getImageUrl().trim().split("http://localhost:8080/api/tutor/profile/uploads/profilePicture/tutor/");
                 return tutorProfileService.getImageByte(filename[1]);
             }
         } else {
