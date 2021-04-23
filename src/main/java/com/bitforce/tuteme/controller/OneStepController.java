@@ -1,0 +1,107 @@
+package com.bitforce.tuteme.controller;
+
+import com.bitforce.tuteme.dto.ApiResponse;
+import com.bitforce.tuteme.dto.ControllerRequest.AddNewQuestionControllerRequest;
+import com.bitforce.tuteme.dto.ServiceRequest.AddNewQuestionRequest;
+import com.bitforce.tuteme.dto.ServiceResponse.GetQuestionsPageResponse;
+import com.bitforce.tuteme.exception.EntityNotFoundException;
+import com.bitforce.tuteme.model.Tag;
+import com.bitforce.tuteme.service.OneStepService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+
+@CrossOrigin(origins = "*")
+@RestController
+@RequestMapping("api/oneStep")
+public class OneStepController {
+    private static final Logger log = LoggerFactory.getLogger(OneStepController.class);
+
+    private final OneStepService oneStepService;
+
+    @Autowired
+    public OneStepController(OneStepService oneStepService) {
+        this.oneStepService = oneStepService;
+    }
+
+    @GetMapping(value = "/getTags")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> getAllTags() {
+        try {
+            List<Tag> tagList = oneStepService.getAllTags();
+            return new ResponseEntity<>(tagList, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to get all tags");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/add_new_question")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> postNewQuestion(@RequestBody AddNewQuestionControllerRequest request) {
+        try {
+            AddNewQuestionRequest addNewQuestionRequest = new AddNewQuestionRequest(
+                    request.getUserId(),
+                    request.getTitle(),
+                    request.getContent(),
+                    request.getTags()
+            );
+            String response = oneStepService.postNewQuestion(addNewQuestionRequest);
+            ApiResponse apiResponse = new ApiResponse(true, response);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to post new question due to bad request for given userId: {}", request.getUserId());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            log.error("Unable to post new question");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @GetMapping(value = "/getQuestions/{page}")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> getQuestions(@PathVariable int page) {
+        try {
+            GetQuestionsPageResponse response = oneStepService.getQuestions(page);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to get all question");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @GetMapping(value = "/searchTagByTitle/{title}")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> searchTagByTitle(@PathVariable String title) {
+        try {
+            List<Tag> list =  oneStepService.searchTagByTitle(title);
+            return new ResponseEntity<>(list, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to get all question");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @GetMapping(value = "/filterTagsByAlphabet")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> filterTagsByAlphabet() {
+        try {
+            List<Tag> list =  oneStepService.filterTagsByAlphabeticOrder();
+            return new ResponseEntity<>(list, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to get all question");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+}
