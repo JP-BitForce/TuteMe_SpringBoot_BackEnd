@@ -39,4 +39,7 @@ public class Question {
     @OneToMany
     private List<Answer> answers;
 
+    @OneToMany
+    private List<Vote> voteList;
+
 }

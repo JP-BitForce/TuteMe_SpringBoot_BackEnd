@@ -1,15 +1,19 @@
 package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.PageableEntity.PageableCoreQuestions;
+import com.bitforce.tuteme.PageableEntity.PageableCoreTags;
 import com.bitforce.tuteme.dto.ServiceRequest.AddNewQuestionRequest;
+import com.bitforce.tuteme.dto.ServiceResponse.GetAnswersResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetQuestionsPageResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.Question;
 import com.bitforce.tuteme.model.Tag;
 import com.bitforce.tuteme.model.User;
+import com.bitforce.tuteme.model.Vote;
 import com.bitforce.tuteme.repository.QuestionRepository;
 import com.bitforce.tuteme.repository.TagRepository;
 import com.bitforce.tuteme.repository.UserRepository;
+import com.bitforce.tuteme.repository.VoteRepository;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,24 +35,31 @@ public class OneStepService {
     private final QuestionRepository questionRepository;
     private final StudentProfileService studentProfileService;
     private final TutorProfileService tutorProfileService;
+    private final VoteRepository voteRepository;
 
     public OneStepService(TagRepository tagRepository,
                           UserRepository userRepository,
                           QuestionRepository questionRepository,
                           StudentProfileService studentProfileService,
-                          TutorProfileService tutorProfileService
+                          TutorProfileService tutorProfileService,
+                          VoteRepository voteRepository
     ) {
         this.tagRepository = tagRepository;
         this.userRepository = userRepository;
         this.questionRepository = questionRepository;
         this.studentProfileService = studentProfileService;
         this.tutorProfileService = tutorProfileService;
+        this.voteRepository = voteRepository;
     }
 
-    public List<Tag> getAllTags() {
-        List<Tag> tagList = tagRepository.findAll();
-        log.info("No of tags found: {}", tagList.size());
-        return tagList;
+    public PageableCoreTags getAllTags(int page) {
+        Page<Tag> tagList = tagRepository.findAll(PageRequest.of(page, 10));
+        log.info("No of tag page found: {}", tagList.getTotalPages());
+        return new PageableCoreTags(
+                tagList.get().collect(Collectors.toList()),
+                tagList.getTotalPages(),
+                tagList.getNumber()
+        );
     }
 
     public String postNewQuestion(AddNewQuestionRequest request) throws EntityNotFoundException {
@@ -133,20 +144,49 @@ public class OneStepService {
                 return null;
         }
         PageableCoreQuestions pageableQuestions = getPageableCoreQuestions(questionPage);
-        return new GetQuestionsPageResponse(
-                pageableQuestions.getQuestions().stream().map(question -> new GetQuestionsPageResponse.Question(
-                        question.getId(),
-                        question.getTitle(),
-                        question.getContent(),
-                        question.getCreatedAt(),
-                        question.getTags(),
-                        getAuthorName(question.getUser()),
-                        getAuthorImageByte(question.getUser().getId()),
-                        question.getVotes(),
-                        question.getAnswers().size()
-                )).collect(Collectors.toList()),
-                pageableQuestions.getTotal(),
-                pageableQuestions.getCurrent()
+        return getPageResponse(pageableQuestions);
+    }
+
+    public String addVote(String uId, String qId) throws EntityNotFoundException {
+        if (!userRepository.findById(Long.parseLong(uId)).isPresent()) {
+            log.error("user not found for id: {}", uId);
+            throw new EntityNotFoundException("USER_NOT_FOUND");
+        }
+        User user = userRepository.findById(Long.parseLong(uId)).get();
+
+        Long questionId = Long.parseLong(qId);
+        if (!questionRepository.findById(questionId).isPresent()) {
+            log.error("question entity not found for given id: {}", questionId);
+            throw new EntityNotFoundException("QUESTION_NOT_FOUND");
+        }
+        Question question = questionRepository.findById(questionId).get();
+        question.setVotes(question.getVotes() + 1);
+
+        Vote vote = Vote.builder().user(user).build();
+        voteRepository.save(vote);
+        List<Vote> votes = question.getVoteList();
+        votes.add(vote);
+        question.setVoteList(votes);
+        questionRepository.save(question);
+        return "vote added successfully";
+    }
+
+    public GetAnswersResponse getAnswers(Long id) throws EntityNotFoundException {
+        if (!questionRepository.findById(id).isPresent()) {
+            log.error("question entity not found for given id: {}", id);
+            throw new EntityNotFoundException("QUESTION_NOT_FOUND");
+        }
+        Question question = questionRepository.findById(id).get();
+        return new GetAnswersResponse(
+                question.getAnswers().stream().map(answer -> new GetAnswersResponse.Answer(
+                                answer.getId(),
+                                answer.getContent(),
+                                answer.getCreatedAt(),
+                                answer.getVotes(),
+                                getAuthorName(answer.getUser()),
+                                getAuthorImageByte(answer.getUser().getId())
+                        )
+                ).collect(Collectors.toList())
         );
     }
 
@@ -168,6 +208,24 @@ public class OneStepService {
                         .collect(Collectors.toList()),
                 questionPage.getTotalPages(),
                 questionPage.getNumber()
+        );
+    }
+
+    private GetQuestionsPageResponse getPageResponse(PageableCoreQuestions pageableQuestions) {
+        return new GetQuestionsPageResponse(
+                pageableQuestions.getQuestions().stream().map(question -> new GetQuestionsPageResponse.Question(
+                        question.getId(),
+                        question.getTitle(),
+                        question.getContent(),
+                        question.getCreatedAt(),
+                        question.getTags(),
+                        getAuthorName(question.getUser()),
+                        getAuthorImageByte(question.getUser().getId()),
+                        question.getVotes(),
+                        question.getAnswers().size()
+                )).collect(Collectors.toList()),
+                pageableQuestions.getTotal(),
+                pageableQuestions.getCurrent()
         );
     }
 
