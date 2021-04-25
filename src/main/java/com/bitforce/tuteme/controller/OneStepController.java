@@ -4,6 +4,7 @@ import com.bitforce.tuteme.PageableEntity.PageableCoreTags;
 import com.bitforce.tuteme.dto.ApiResponse;
 import com.bitforce.tuteme.dto.ControllerRequest.AddNewQuestionControllerRequest;
 import com.bitforce.tuteme.dto.ControllerRequest.AddQuestionVoteControllerRequest;
+import com.bitforce.tuteme.dto.ControllerRequest.PostAnswerControllerRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.AddNewQuestionRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetAnswersResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetQuestionsPageResponse;
@@ -141,18 +142,55 @@ public class OneStepController {
         }
     }
 
-    @GetMapping(value = "/get_question_answers/{id}")
+    @GetMapping(value = "/get_question_answers")
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<?> getQuestionAnswers(@PathVariable String id) {
+    public ResponseEntity<?> getQuestionAnswers(@RequestParam String uId, @RequestParam String qId) {
         try {
-            GetAnswersResponse getAnswersResponse = oneStepService.getAnswers(Long.parseLong(id));
+            GetAnswersResponse getAnswersResponse = oneStepService.getAnswers(
+                    Long.parseLong(qId),
+                    Long.parseLong(uId)
+            );
             return new ResponseEntity<>(getAnswersResponse, HttpStatus.OK);
         } catch (EntityNotFoundException e) {
-            log.error("Unable to get answers for question id: {}", id);
+            log.error("Unable to get answers for question id: {}", qId);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Unable to get answers");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/post_answer")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> postAnswer(@RequestBody PostAnswerControllerRequest request) {
+        try {
+            String res = oneStepService.postNewAnswer(
+                    Long.parseLong(request.getUserId()),
+                    Long.parseLong(request.getQuestionId()),
+                    request.getAnswer()
+            );
+            ApiResponse apiResponse = new ApiResponse(true, res);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to add answer for question:=> QID: {}, UId: {}", request.getQuestionId(), request.getUserId());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            log.error("Unable to add answer for question with id of: {}", request.getQuestionId());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @GetMapping(value = "/filter_question_by_tag")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> filterQuestionByTag(@RequestParam String tag, @RequestParam int page) {
+        try {
+            GetQuestionsPageResponse response = oneStepService.filterByTag(tag, page);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to filter questions");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
