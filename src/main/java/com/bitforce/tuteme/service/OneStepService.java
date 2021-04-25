@@ -237,6 +237,15 @@ public class OneStepService {
         return getPageResponse(pageableQuestions);
     }
 
+    public GetQuestionsPageResponse searchQuestionByValue(String value, int page) {
+        Page<Question> questionPage = questionRepository.findAllByTitleIsContaining(
+                value,
+                PageRequest.of(page, 10)
+        );
+        PageableCoreQuestions pageableQuestions = getPageableCoreQuestions(questionPage);
+        return getPageResponse(pageableQuestions);
+    }
+
 
     private User getUser(Long userId) throws EntityNotFoundException {
         if (!userRepository.findById(userId).isPresent()) {

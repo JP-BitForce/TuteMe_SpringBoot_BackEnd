@@ -23,4 +23,6 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
             LocalDateTime start,
             Pageable pageable
     );
+
+    Page<Question> findAllByTitleIsContaining(String title, Pageable pageable);
 }
