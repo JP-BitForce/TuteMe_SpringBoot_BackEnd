@@ -194,4 +194,17 @@ public class OneStepController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
+
+    @GetMapping(value = "/search_question")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> searchQuestion(@RequestParam String value, @RequestParam int page) {
+        try {
+            GetQuestionsPageResponse response = oneStepService.searchQuestionByValue(value, page);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to filter questions");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
 }
