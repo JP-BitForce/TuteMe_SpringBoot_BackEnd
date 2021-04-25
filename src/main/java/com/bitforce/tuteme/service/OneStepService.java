@@ -137,12 +137,37 @@ public class OneStepService {
             case "Votes":
                 questionPage = filterQuestionByVoteOrder(page);
                 break;
+            case "Newest":
+                questionPage = filterQuestionByTime(page);
+                break;
             default:
                 return null;
         }
         PageableCoreQuestions pageableQuestions = getPageableCoreQuestions(questionPage);
         return getPageResponse(pageableQuestions);
     }
+
+    private Page<Question> filterUnansweredQuestions(int page) {
+        return questionRepository.findAllByAnsweredEquals(
+                false,
+                PageRequest.of(page, 10)
+        );
+    }
+
+    private Page<Question> filterQuestionByVoteOrder(int page) {
+        return questionRepository.findByOrderByVotesDesc(PageRequest.of(page, 10));
+    }
+
+    private Page<Question> filterQuestionByTime(int page) {
+        LocalDateTime start = LocalDateTime.now();
+        LocalDateTime end = LocalDateTime.now().minusDays(3);
+        return questionRepository.findAllByCreatedAtLessThanEqualAndCreatedAtGreaterThanOrderByCreatedAtDesc(
+                start,
+                end,
+                PageRequest.of(page, 10)
+        );
+    }
+
 
     public String addVote(String uId, String qId) throws EntityNotFoundException {
         User user = getUser(Long.parseLong(uId));
@@ -212,16 +237,6 @@ public class OneStepService {
         return getPageResponse(pageableQuestions);
     }
 
-    private Page<Question> filterUnansweredQuestions(int page) {
-        return questionRepository.findAllByAnsweredEquals(
-                false,
-                PageRequest.of(page, 10)
-        );
-    }
-
-    private Page<Question> filterQuestionByVoteOrder(int page) {
-        return questionRepository.findByOrderByVotesDesc(PageRequest.of(page, 10));
-    }
 
     private User getUser(Long userId) throws EntityNotFoundException {
         if (!userRepository.findById(userId).isPresent()) {
