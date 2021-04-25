@@ -6,14 +6,8 @@ import com.bitforce.tuteme.dto.ServiceRequest.AddNewQuestionRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetAnswersResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetQuestionsPageResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
-import com.bitforce.tuteme.model.Question;
-import com.bitforce.tuteme.model.Tag;
-import com.bitforce.tuteme.model.User;
-import com.bitforce.tuteme.model.Vote;
-import com.bitforce.tuteme.repository.QuestionRepository;
-import com.bitforce.tuteme.repository.TagRepository;
-import com.bitforce.tuteme.repository.UserRepository;
-import com.bitforce.tuteme.repository.VoteRepository;
+import com.bitforce.tuteme.model.*;
+import com.bitforce.tuteme.repository.*;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +30,15 @@ public class OneStepService {
     private final StudentProfileService studentProfileService;
     private final TutorProfileService tutorProfileService;
     private final VoteRepository voteRepository;
+    private final AnswerRepository answerRepository;
 
     public OneStepService(TagRepository tagRepository,
                           UserRepository userRepository,
                           QuestionRepository questionRepository,
                           StudentProfileService studentProfileService,
                           TutorProfileService tutorProfileService,
-                          VoteRepository voteRepository
+                          VoteRepository voteRepository,
+                          AnswerRepository answerRepository
     ) {
         this.tagRepository = tagRepository;
         this.userRepository = userRepository;
@@ -50,6 +46,7 @@ public class OneStepService {
         this.studentProfileService = studentProfileService;
         this.tutorProfileService = tutorProfileService;
         this.voteRepository = voteRepository;
+        this.answerRepository = answerRepository;
     }
 
     public PageableCoreTags getAllTags(int page) {
@@ -148,18 +145,10 @@ public class OneStepService {
     }
 
     public String addVote(String uId, String qId) throws EntityNotFoundException {
-        if (!userRepository.findById(Long.parseLong(uId)).isPresent()) {
-            log.error("user not found for id: {}", uId);
-            throw new EntityNotFoundException("USER_NOT_FOUND");
-        }
-        User user = userRepository.findById(Long.parseLong(uId)).get();
+        User user = getUser(Long.parseLong(uId));
 
         Long questionId = Long.parseLong(qId);
-        if (!questionRepository.findById(questionId).isPresent()) {
-            log.error("question entity not found for given id: {}", questionId);
-            throw new EntityNotFoundException("QUESTION_NOT_FOUND");
-        }
-        Question question = questionRepository.findById(questionId).get();
+        Question question = getQuestion(questionId);
         question.setVotes(question.getVotes() + 1);
 
         Vote vote = Vote.builder().user(user).build();
@@ -171,12 +160,16 @@ public class OneStepService {
         return "vote added successfully";
     }
 
-    public GetAnswersResponse getAnswers(Long id) throws EntityNotFoundException {
-        if (!questionRepository.findById(id).isPresent()) {
-            log.error("question entity not found for given id: {}", id);
-            throw new EntityNotFoundException("QUESTION_NOT_FOUND");
+    public GetAnswersResponse getAnswers(Long id, Long userId) throws EntityNotFoundException {
+        Question question = getQuestion(id);
+        List<Vote> voteList = question.getVoteList();
+        boolean currentUserVotedForQuestion = false;
+        for (Vote vote : voteList) {
+            if (vote.getUser().getId().equals(userId)) {
+                currentUserVotedForQuestion = true;
+                break;
+            }
         }
-        Question question = questionRepository.findById(id).get();
         return new GetAnswersResponse(
                 question.getAnswers().stream().map(answer -> new GetAnswersResponse.Answer(
                                 answer.getId(),
@@ -186,8 +179,37 @@ public class OneStepService {
                                 getAuthorName(answer.getUser()),
                                 getAuthorImageByte(answer.getUser().getId())
                         )
-                ).collect(Collectors.toList())
+                ).collect(Collectors.toList()),
+                currentUserVotedForQuestion
         );
+    }
+
+    public String postNewAnswer(Long uId, Long qId, String content) throws EntityNotFoundException {
+        User user = getUser(uId);
+        Question question = getQuestion(qId);
+        Answer answer = Answer
+                .builder()
+                .content(content)
+                .createdAt(LocalDateTime.now())
+                .votes(0)
+                .user(user)
+                .build();
+        answerRepository.save(answer);
+        List<Answer> answers = question.getAnswers();
+        answers.add(answer);
+        question.setAnswers(answers);
+        questionRepository.save(question);
+        return "answer added successfully";
+    }
+
+    public GetQuestionsPageResponse filterByTag(String tag, int page) {
+        List<Tag> tagList = tagRepository.findAllByTitleIsContaining(tag);
+        Page<Question> questionPage = questionRepository.findAllByTagsIn(
+                tagList,
+                PageRequest.of(page, 10)
+        );
+        PageableCoreQuestions pageableQuestions = getPageableCoreQuestions(questionPage);
+        return getPageResponse(pageableQuestions);
     }
 
     private Page<Question> filterUnansweredQuestions(int page) {
@@ -199,6 +221,22 @@ public class OneStepService {
 
     private Page<Question> filterQuestionByVoteOrder(int page) {
         return questionRepository.findByOrderByVotesDesc(PageRequest.of(page, 10));
+    }
+
+    private User getUser(Long userId) throws EntityNotFoundException {
+        if (!userRepository.findById(userId).isPresent()) {
+            log.error("user not found for id: {}", userId);
+            throw new EntityNotFoundException("USER_NOT_FOUND");
+        }
+        return userRepository.findById(userId).get();
+    }
+
+    private Question getQuestion(Long qId) throws EntityNotFoundException {
+        if (!questionRepository.findById(qId).isPresent()) {
+            log.error("question entity not found for given id: {}", qId);
+            throw new EntityNotFoundException("QUESTION_NOT_FOUND");
+        }
+        return questionRepository.findById(qId).get();
     }
 
     private PageableCoreQuestions getPageableCoreQuestions(Page<Question> questionPage) {

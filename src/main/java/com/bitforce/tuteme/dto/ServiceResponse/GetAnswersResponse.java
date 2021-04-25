@@ -13,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class GetAnswersResponse {
     List<Answer> answers = new ArrayList<>();
+    private boolean currentUserVotedForQuestion;
 
     @Data
     @NoArgsConstructor
