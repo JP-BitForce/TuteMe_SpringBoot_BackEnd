@@ -1,8 +1,6 @@
 package com.bitforce.tuteme.repository;
 
-import com.bitforce.tuteme.model.Course;
-import com.bitforce.tuteme.model.CourseCategory;
-import com.bitforce.tuteme.model.Tutor;
+import com.bitforce.tuteme.model.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +15,14 @@ public interface CourseRepository extends JpaRepository<Course,Long> {
     Page<Course> findAllByCourseCategoryInAndTutorIn(
             List<CourseCategory> courseCategories,
             List<Tutor> tutors,
+            Pageable pageable
+    );
+
+    Page<Course> findAllByCourseCategoryInAndTutorInAndCourseTypeInAndCoursePriceCategoryIn(
+            List<CourseCategory> courseCategories,
+            List<Tutor> tutors,
+            List<CourseType> courseTypes,
+            List<CoursePriceCategory> coursePriceCategories,
             Pageable pageable
     );
 }
