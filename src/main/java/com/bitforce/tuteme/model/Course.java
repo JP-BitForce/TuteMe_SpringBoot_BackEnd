@@ -25,4 +25,10 @@ public class Course {
     private Tutor tutor;
     @ManyToOne
     private CourseCategory courseCategory;
+
+    @OneToOne
+    private CoursePriceCategory coursePriceCategory;
+
+    @OneToOne
+    private CourseType courseType;
 }

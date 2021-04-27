@@ -1,7 +1,10 @@
 package com.bitforce.tuteme.controller;
 
+import com.bitforce.tuteme.dto.ApiResponse;
+import com.bitforce.tuteme.dto.ControllerRequest.EnrollCourseAndPayControllerRequest;
 import com.bitforce.tuteme.dto.ControllerRequest.FilterCoursesControllerRequest;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
+import com.bitforce.tuteme.dto.ServiceRequest.EnrollCourseAndPayRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
 import com.bitforce.tuteme.model.Course;
@@ -101,6 +104,38 @@ public class CourseController {
             );
             Map<String, Object> response = courseService.filterCourses(filterCoursesRequest);
             return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to search course by value");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/course_enrollemnt", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> enrollCourse(@RequestPart("request") EnrollCourseAndPayControllerRequest request, @RequestPart("file") MultipartFile file) {
+        try {
+            EnrollCourseAndPayRequest enrollCourseAndPayRequest = new EnrollCourseAndPayRequest(
+                    request.getFirstName(),
+                    request.getLastName(),
+                    request.getAddress(),
+                    request.getCity(),
+                    request.getZip(),
+                    request.getMobile(),
+                    request.getEmail(),
+                    request.getCvv(),
+                    request.getExp(),
+                    request.getCardNo(),
+                    request.getDepositedAt(),
+                    file,
+                    request.getPaymentMethod(),
+                    request.getUserId(),
+                    request.getCourseId(),
+                    request.getPaymentType()
+            );
+            String response = courseService.handleEnrollment(enrollCourseAndPayRequest);
+            ApiResponse apiResponse = new ApiResponse(true, response);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Unable to search course by value");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());

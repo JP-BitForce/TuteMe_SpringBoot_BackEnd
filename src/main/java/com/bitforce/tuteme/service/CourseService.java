@@ -2,12 +2,12 @@ package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.dto.CourseDTO;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
+import com.bitforce.tuteme.dto.ServiceRequest.EnrollCourseAndPayRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
+import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.*;
-import com.bitforce.tuteme.repository.CourseLevelRespository;
-import com.bitforce.tuteme.repository.CoursePriceCategoryRepository;
-import com.bitforce.tuteme.repository.CourseRepository;
+import com.bitforce.tuteme.repository.*;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.Resource;
@@ -35,6 +35,10 @@ public class CourseService {
     private final CourseLevelRespository courseLevelRespository;
     private final CoursePriceCategoryRepository coursePriceCategoryRepository;
     private final TutorProfileService tutorProfileService;
+    private final CourseTypeRepository courseTypeRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final PaymentService paymentService;
+    private final UserRepository userRepository;
 
     public Course createCourse(MultipartFile file, Course course) {
         String fileName = fileStorageService.storeFile(file);
@@ -147,12 +151,45 @@ public class CourseService {
     public Map<String, Object> filterCourses(FilterCoursesRequest request) {
         List<CourseCategory> categoryList = courseCategoryService.getCourseCategoryByName(request.getCategoryList());
         List<Tutor> tutorList = tutorProfileService.getTutorsByName(request.getTutorList());
-        Page<Course> coursePage = courseRepository.findAllByCourseCategoryInAndTutorIn(
+        List<CourseType> courseTypeList = courseTypeRepository.findAllByTitleIn(request.getTypeList());
+        Page<Course> coursePage = courseRepository.findAllByCourseCategoryInAndTutorInAndCourseTypeInAndCoursePriceCategoryIn(
                 categoryList,
                 tutorList,
+                courseTypeList,
+                request.getPriceList(),
                 PageRequest.of(request.getPage(), 10)
         );
         return getCoursesResponse(coursePage);
+    }
+
+    public String handleEnrollment(EnrollCourseAndPayRequest request) throws EntityNotFoundException {
+        Long uId = Long.parseLong(request.getUserId());
+        if (!userRepository.findById(uId).isPresent()) {
+            throw new EntityNotFoundException("USER_NOT_FOUND");
+        }
+        User user = userRepository.findById(uId).get();
+        Long cId = Long.parseLong(request.getCourseId());
+        if (!courseRepository.findById(cId).isPresent()) {
+            throw new EntityNotFoundException("COURSE_NOT_FOUND");
+        }
+        Course course = courseRepository.findById(cId).get();
+        Enrollment enrollment = enrollmentRepository.findByUser(user);
+        List<Course> courses = new ArrayList<>();
+        if (enrollment == null) {
+            courses.add(course);
+            enrollment = Enrollment
+                    .builder()
+                    .user(user)
+                    .courses(courses)
+                    .build();
+        } else {
+            courses = enrollment.getCourses();
+            courses.add(course);
+            enrollment.setCourses(courses);
+        }
+        enrollmentRepository.save(enrollment);
+        paymentService.createNewPayment(request);
+        return "course enrolled successfully";
     }
 
     public Map<String, Object> getCoursesResponse(Page<Course> coursePage) {
