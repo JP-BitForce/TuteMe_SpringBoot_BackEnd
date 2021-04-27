@@ -1,11 +1,15 @@
 package com.bitforce.tuteme.controller;
 
+import com.bitforce.tuteme.dto.ControllerRequest.FilterCoursesControllerRequest;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
+import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
 import com.bitforce.tuteme.model.Course;
 import com.bitforce.tuteme.service.CourseService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +26,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/courses")
 public class CourseController {
+    private static final Logger log = LoggerFactory.getLogger(CourseController.class);
     private final CourseService courseService;
 
     @PostMapping
@@ -65,6 +70,39 @@ public class CourseController {
         try {
             return courseService.getFilterCategories();
         } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @GetMapping(value = "/searchCourseByValue")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> searchCourseByValue(@RequestParam int page, @RequestParam String value) {
+        try {
+            Map<String, Object> response = courseService.searchByValue(page, value);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to search course by value");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/filterCourses")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> filterCourses(@RequestBody FilterCoursesControllerRequest request) {
+        try {
+            FilterCoursesRequest filterCoursesRequest = new FilterCoursesRequest(
+                    request.getCategoryList(),
+                    request.getTutorList(),
+                    request.getTypeList(),
+                    request.getPriceList(),
+                    request.getPage()
+            );
+            Map<String, Object> response = courseService.filterCourses(filterCoursesRequest);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to search course by value");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }

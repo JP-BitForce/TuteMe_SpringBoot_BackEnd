@@ -71,6 +71,10 @@ public class CourseCategoryService {
         return "CourseCategory Deleted Successfully..!";
     }
 
+    public List<CourseCategory> getCourseCategoryByName(List<String> categories) {
+        return courseCategoryRepository.findAllByCategoryIn(categories);
+    }
+
 
     public ResponseEntity<Resource> getImageResource(String filename, HttpServletRequest request) {
         return fileStorageService.loadFileAsResource(filename, request);
