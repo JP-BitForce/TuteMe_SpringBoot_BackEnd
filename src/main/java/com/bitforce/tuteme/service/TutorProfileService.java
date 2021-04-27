@@ -115,6 +115,18 @@ public class TutorProfileService {
         return user;
     }
 
+    public List<Tutor> getTutorsByName(List<String> userNameList) {
+        List<String> firstNameList = new ArrayList<>();
+        List<String> lastNameList = new ArrayList<>();
+        for (String userName : userNameList) {
+            String[] name = userName.split(" ");
+            firstNameList.add(name[0]);
+            lastNameList.add(name[1]);
+        }
+        List<User> users = userRepository.findAllByFirstNameInAndLastNameIn(firstNameList, lastNameList);
+        return tutorRepository.findAllByUserIn(users);
+    }
+
     public ResponseEntity<Resource> getImageResource(String filename, HttpServletRequest request) {
         return fileStorageService.loadFileAsResource(filename, request);
     }
