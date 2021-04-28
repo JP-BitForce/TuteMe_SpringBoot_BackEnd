@@ -16,4 +16,5 @@ public class FilterCoursesRequest {
     private List<String> typeList;
     private List<CoursePriceCategory> priceList;
     private int page;
+    private Long userId;
 }

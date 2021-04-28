@@ -48,7 +48,7 @@ public class PaymentService {
                 .toUriString();
     }
 
-    public void createNewPayment(EnrollCourseAndPayRequest request) throws EntityNotFoundException {
+    public Payment createNewPayment(EnrollCourseAndPayRequest request) throws EntityNotFoundException {
         Long uId = Long.parseLong(request.getUserId());
         if (!userRepository.findById(uId).isPresent()) {
             log.error("user not for found id: {}", uId);
@@ -91,6 +91,7 @@ public class PaymentService {
                     .build();
             bankPaymentRepository.save(bankPayment);
         }
+        return payment;
     }
 
     private LocalDateTime parse(String date) {

@@ -1,10 +1,8 @@
 package com.bitforce.tuteme.service;
 
-import com.bitforce.tuteme.dto.StudentProfileDTO;
-import com.bitforce.tuteme.model.Student;
-import com.bitforce.tuteme.model.User;
-import com.bitforce.tuteme.model.UserAuth;
-import com.bitforce.tuteme.repository.CourseEnrollmentRepository;
+import com.bitforce.tuteme.dto.StudentProfileDTO;;
+import com.bitforce.tuteme.model.*;
+import com.bitforce.tuteme.repository.EnrollmentRepository;
 import com.bitforce.tuteme.repository.StudentRepository;
 import com.bitforce.tuteme.repository.UserAuthRepository;
 import com.bitforce.tuteme.repository.UserRepository;
@@ -34,17 +32,17 @@ public class StudentProfileService {
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
     private final UserAuthRepository userAuthRepository;
-    private final CourseEnrollmentRepository courseEnrollmentRepository;
+    private final EnrollmentRepository enrollmentRepository;
     private final FileStorageService fileStorageService = new FileStorageService("profilePicture/student");
 
     public StudentProfileDTO updateStudentProfile(StudentProfileDTO studentProfileDTO, Long userId) {
         User user = userRepository.findById(userId).get();
         studentProfileDTO.setImageUrl(user.getImageUrl());
-        BeanUtils.copyProperties(studentProfileDTO,user);
+        BeanUtils.copyProperties(studentProfileDTO, user);
         userRepository.save(user);
 
         Student student = studentRepository.findByUserId(userId);
-        BeanUtils.copyProperties(studentProfileDTO,student);
+        BeanUtils.copyProperties(studentProfileDTO, student);
         studentRepository.save(student);
 
         return studentProfileDTO;
@@ -56,11 +54,12 @@ public class StudentProfileService {
         UserAuth userAuth = userAuthRepository.findByUserId(userId);
         Student student = studentRepository.findByUserId(userId);
 
-        int courseCount = courseEnrollmentRepository.findAllCourseCountByStudentId(student.getId());
-        int tutorsCount = courseEnrollmentRepository.findAllTutorsCountByStudentId(student.getId());
+        List<Course> courses = getEnrolledCourses(user);
+        int courseCount = courses.size();
+        int tutorsCount = courses.size();
 
-        BeanUtils.copyProperties(user,studentProfileDTO);
-        BeanUtils.copyProperties(student,studentProfileDTO);
+        BeanUtils.copyProperties(user, studentProfileDTO);
+        BeanUtils.copyProperties(student, studentProfileDTO);
         studentProfileDTO.setId(student.getId());
         studentProfileDTO.setEmail(userAuth.getEmail());
         studentProfileDTO.setCourseCount(courseCount);
@@ -69,23 +68,23 @@ public class StudentProfileService {
         return studentProfileDTO;
     }
 
-    public  ResponseEntity<Map<String, Object>> getStudentProfiles(int page) {
+    public ResponseEntity<Map<String, Object>> getStudentProfiles(int page) {
         try {
             Pageable paging = PageRequest.of(page, 10);
             Page<Student> studentPage = studentRepository.findAll(paging);
             List<Student> students = studentPage.getContent();
 
             List<StudentProfileDTO> studentProfileDTOS = new ArrayList<>();
-            for (Student student : students){
+            for (Student student : students) {
                 StudentProfileDTO studentProfileDTO = new StudentProfileDTO();
-                BeanUtils.copyProperties(student,studentProfileDTO);
-                User user =userRepository.findById(student.getUser().getId()).get();
+                BeanUtils.copyProperties(student, studentProfileDTO);
+                User user = userRepository.findById(student.getUser().getId()).get();
                 UserAuth userAuth = userAuthRepository.findByUserId(student.getUser().getId());
-                BeanUtils.copyProperties(user,studentProfileDTO);
+                BeanUtils.copyProperties(user, studentProfileDTO);
                 studentProfileDTO.setId(student.getId());
                 studentProfileDTO.setEmail(userAuth.getEmail());
-                studentProfileDTO.setCourseCount(courseEnrollmentRepository.findAllCourseCountByStudentId(student.getId()));
-                studentProfileDTO.setTutorCount(courseEnrollmentRepository.findAllTutorsCountByStudentId(student.getId()));
+                studentProfileDTO.setCourseCount(getEnrolledCourses(user).size());
+                studentProfileDTO.setTutorCount(getEnrolledCourses(user).size());
 
                 studentProfileDTOS.add(studentProfileDTO);
 
@@ -97,7 +96,7 @@ public class StudentProfileService {
             response.put("total", studentPage.getTotalPages());
 
             return new ResponseEntity<>(response, HttpStatus.OK);
-        }catch (Exception e) {
+        } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -117,10 +116,14 @@ public class StudentProfileService {
     }
 
     public ResponseEntity<Resource> getImageResource(String filename, HttpServletRequest request) {
-        return fileStorageService.loadFileAsResource(filename,request);
+        return fileStorageService.loadFileAsResource(filename, request);
     }
 
     public byte[] getImageByte(String filename) throws IOException {
         return fileStorageService.convert(filename);
+    }
+
+    private List<Course> getEnrolledCourses(User user) {
+        return enrollmentRepository.findByUser(user).getCourses();
     }
 }
