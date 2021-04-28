@@ -2,15 +2,14 @@ package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.dto.CourseDTO;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
-import com.bitforce.tuteme.dto.ServiceRequest.EnrollCourseAndPayRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.*;
 import com.bitforce.tuteme.repository.*;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.beans.BeanUtils;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,7 +35,6 @@ public class CourseService {
     private final TutorProfileService tutorProfileService;
     private final CourseTypeRepository courseTypeRepository;
     private final EnrollmentRepository enrollmentRepository;
-    private final PaymentService paymentService;
     private final UserRepository userRepository;
 
     public Course createCourse(MultipartFile file, Course course) {
@@ -54,7 +51,7 @@ public class CourseService {
         return courseRepository.save(course);
     }
 
-    public ResponseEntity<Map<String, Object>> getAllCourses(int page) {
+    public ResponseEntity<Map<String, Object>> getAllCourses(int page, Long userId) {
         try {
             Pageable paging = PageRequest.of(page, 10);
             Page<Course> coursePage = courseRepository.findAll(paging);
@@ -68,6 +65,8 @@ public class CourseService {
                 courseDTO.setCategoryName(course.getCourseCategory().getCategory());
                 courseDTO.setTutorId(course.getTutor().getId());
                 courseDTO.setTutorName(course.getTutor().getUser().getFirstName() + " " + course.getTutor().getUser().getLastName());
+                courseDTO.setImageUrl(getCourseImage(course.getImageUrl()));
+                courseDTO.setEnrolledByCurrentUser(isCurrentUserEnrolled(userId, course));
                 courseDTOS.add(courseDTO);
             }
 
@@ -140,15 +139,15 @@ public class CourseService {
         );
     }
 
-    public Map<String, Object> searchByValue(int page, String value) {
+    public Map<String, Object> searchByValue(int page, String value, Long userId) throws EntityNotFoundException {
         Page<Course> coursePage = courseRepository.findAllByNameContaining(
                 value,
                 PageRequest.of(page, 10)
         );
-        return getCoursesResponse(coursePage);
+        return getCoursesResponse(coursePage, userId);
     }
 
-    public Map<String, Object> filterCourses(FilterCoursesRequest request) {
+    public Map<String, Object> filterCourses(FilterCoursesRequest request) throws EntityNotFoundException {
         List<CourseCategory> categoryList = courseCategoryService.getCourseCategoryByName(request.getCategoryList());
         List<Tutor> tutorList = tutorProfileService.getTutorsByName(request.getTutorList());
         List<CourseType> courseTypeList = courseTypeRepository.findAllByTitleIn(request.getTypeList());
@@ -159,40 +158,10 @@ public class CourseService {
                 request.getPriceList(),
                 PageRequest.of(request.getPage(), 10)
         );
-        return getCoursesResponse(coursePage);
+        return getCoursesResponse(coursePage, request.getUserId());
     }
 
-    public String handleEnrollment(EnrollCourseAndPayRequest request) throws EntityNotFoundException {
-        Long uId = Long.parseLong(request.getUserId());
-        if (!userRepository.findById(uId).isPresent()) {
-            throw new EntityNotFoundException("USER_NOT_FOUND");
-        }
-        User user = userRepository.findById(uId).get();
-        Long cId = Long.parseLong(request.getCourseId());
-        if (!courseRepository.findById(cId).isPresent()) {
-            throw new EntityNotFoundException("COURSE_NOT_FOUND");
-        }
-        Course course = courseRepository.findById(cId).get();
-        Enrollment enrollment = enrollmentRepository.findByUser(user);
-        List<Course> courses = new ArrayList<>();
-        if (enrollment == null) {
-            courses.add(course);
-            enrollment = Enrollment
-                    .builder()
-                    .user(user)
-                    .courses(courses)
-                    .build();
-        } else {
-            courses = enrollment.getCourses();
-            courses.add(course);
-            enrollment.setCourses(courses);
-        }
-        enrollmentRepository.save(enrollment);
-        paymentService.createNewPayment(request);
-        return "course enrolled successfully";
-    }
-
-    public Map<String, Object> getCoursesResponse(Page<Course> coursePage) {
+    public Map<String, Object> getCoursesResponse(Page<Course> coursePage, Long userId) throws EntityNotFoundException {
         List<Course> courseList = coursePage.getContent();
 
         List<CourseDTO> courseDTOS = new ArrayList<>();
@@ -203,6 +172,8 @@ public class CourseService {
             courseDTO.setCategoryName(course.getCourseCategory().getCategory());
             courseDTO.setTutorId(course.getTutor().getId());
             courseDTO.setTutorName(course.getTutor().getUser().getFirstName() + " " + course.getTutor().getUser().getLastName());
+            courseDTO.setImageUrl(getCourseImage(course.getImageUrl()));
+            courseDTO.setEnrolledByCurrentUser(isCurrentUserEnrolled(userId, course));
             courseDTOS.add(courseDTO);
         }
 
@@ -213,12 +184,40 @@ public class CourseService {
         return response;
     }
 
+    private boolean isCurrentUserEnrolled(Long userId, Course course) throws EntityNotFoundException {
+        boolean isEnrolled = false;
+        Enrollment enrollment = getEnrollmentByUser(userId);
+        if (enrollment != null) {
+            List<Course> courses = enrollment.getCourses();
+            for (Course enrolledCourse : courses) {
+                if (enrolledCourse == course) {
+                    isEnrolled = true;
+                    break;
+                }
+            }
+        }
+        return isEnrolled;
+    }
+
+    private Enrollment getEnrollmentByUser(Long id) throws EntityNotFoundException {
+        if (!userRepository.findById(id).isPresent()) {
+            throw new EntityNotFoundException("USER_NOT_FOUND");
+        }
+        User user = userRepository.findById(id).get();
+        return enrollmentRepository.findByUser(user);
+    }
+
     public String getUserFullName(User user) {
         return user.getFirstName() + " " + user.getLastName();
     }
 
-    public ResponseEntity<Resource> getImageResource(String filename, HttpServletRequest request) {
-        return fileStorageService.loadFileAsResource(filename, request);
+    @SneakyThrows
+    private byte[] getCourseImage(String url) {
+        if (url != null) {
+            String[] filename = url.trim().split("http://localhost:8080/api/courses/uploads/Courses/");
+            return getImageByte(filename[1]);
+        }
+        return null;
     }
 
     public byte[] getImageByte(String filename) throws IOException {

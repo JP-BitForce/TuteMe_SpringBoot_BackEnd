@@ -13,7 +13,7 @@ public class CourseDTO {
     private Long id;
     private String name;
     private String description;
-    private String imageUrl;
+    private byte[] imageUrl;
     private Double rating;
     private String duration;
     private BigDecimal price;
@@ -21,4 +21,5 @@ public class CourseDTO {
     private String tutorName;
     private Long categoryId;
     private String categoryName;
+    private boolean isEnrolledByCurrentUser;
 }

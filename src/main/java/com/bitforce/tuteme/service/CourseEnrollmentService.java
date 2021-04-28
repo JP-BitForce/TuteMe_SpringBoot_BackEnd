@@ -1,77 +1,127 @@
 package com.bitforce.tuteme.service;
 
-import com.bitforce.tuteme.dto.CourseDTO;
-import com.bitforce.tuteme.dto.CourseEnrollmentDTO;
-import com.bitforce.tuteme.model.Course;
-import com.bitforce.tuteme.model.CourseEnrollment;
-import com.bitforce.tuteme.repository.CourseEnrollmentRepository;
-import com.bitforce.tuteme.repository.CourseRepository;
-import com.bitforce.tuteme.repository.StudentRepository;
-import lombok.AllArgsConstructor;
-import org.springframework.beans.BeanUtils;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import com.bitforce.tuteme.dto.ServiceRequest.EnrollCourseAndPayRequest;
+import com.bitforce.tuteme.dto.ServiceResponse.GetEnrolledCoursesResponse;
+import com.bitforce.tuteme.exception.EntityNotFoundException;
+import com.bitforce.tuteme.model.*;
+import com.bitforce.tuteme.repository.*;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
 public class CourseEnrollmentService {
 
-    private final CourseEnrollmentRepository courseEnrollmentRepository;
     private final CourseRepository courseRepository;
-    private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final PaymentService paymentService;
+    private final CourseService courseService;
+    private final CourseEnrollmentDetailRepository courseEnrollmentDetailRepository;
 
-    public CourseEnrollment enrollToCourse(Long courseId, Long studentId) {
-        CourseEnrollment courseEnrollment = new CourseEnrollment();
-        courseEnrollment.setCourse(courseRepository.findById(courseId).get());
-        courseEnrollment.setStudent(studentRepository.findById(studentId).get());
-        courseEnrollmentRepository.save(courseEnrollment);
-        return courseEnrollment;
+    public CourseEnrollmentService(CourseRepository courseRepository,
+                                   UserRepository userRepository,
+                                   EnrollmentRepository enrollmentRepository,
+                                   PaymentService paymentService,
+                                   CourseService courseService,
+                                   CourseEnrollmentDetailRepository courseEnrollmentDetailRepository
+    ) {
+        this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
+        this.enrollmentRepository = enrollmentRepository;
+        this.paymentService = paymentService;
+        this.courseService = courseService;
+        this.courseEnrollmentDetailRepository = courseEnrollmentDetailRepository;
     }
 
-    public ResponseEntity<Map<String, Object>> getAllEnrolledCoursesForStudent(Long studentId, int page) {
-        try {
-            Pageable paging = PageRequest.of(page, 10);
-            Page<CourseEnrollment> coursePage = courseEnrollmentRepository.findAllByStudentId(studentId,paging);
-            List<CourseEnrollment> courseEnrollments = coursePage.getContent();
-
-            List<CourseEnrollmentDTO> courseEnrollmentDTOS = new ArrayList<>();
-            for (CourseEnrollment courseEnrollment : courseEnrollments){
-                CourseEnrollmentDTO courseEnrollmentDTO = new CourseEnrollmentDTO();
-                courseEnrollmentDTO.setId(courseEnrollment.getId());
-                Course course =courseEnrollment.getCourse();
-                CourseDTO courseDTO = new CourseDTO();
-                BeanUtils.copyProperties(course,courseDTO);
-                courseDTO.setCategoryId(course.getCourseCategory().getId());
-                courseDTO.setCategoryName(course.getCourseCategory().getCategory());
-                courseDTO.setTutorId(course.getTutor().getId());
-                courseDTO.setTutorName(course.getTutor().getUser().getFirstName() +" "+course.getTutor().getUser().getLastName());
-                courseEnrollmentDTO.setCourse(courseDTO);
-
-                courseEnrollmentDTOS.add(courseEnrollmentDTO);
-            }
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("data", courseEnrollmentDTOS);
-            response.put("current", coursePage.getNumber());
-            response.put("total", coursePage.getTotalPages());
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+    public String handleEnrollment(EnrollCourseAndPayRequest request) throws EntityNotFoundException {
+        Long uId = getLong(request.getUserId());
+        User user = getUser(uId);
+        Long cId = getLong(request.getCourseId());
+        Course course = getCourse(cId);
+        Enrollment enrollment = enrollmentRepository.findByUser(user);
+        List<Course> courses = new ArrayList<>();
+        if (enrollment == null) {
+            courses.add(course);
+            enrollment = Enrollment
+                    .builder()
+                    .user(user)
+                    .courses(courses)
+                    .build();
+        } else {
+            courses = enrollment.getCourses();
+            courses.add(course);
+            enrollment.setCourses(courses);
         }
+        enrollmentRepository.save(enrollment);
+        Payment payment = paymentService.createNewPayment(request);
+        CourseEnrollmentDetail courseEnrollmentDetail = CourseEnrollmentDetail
+                .builder()
+                .enrollmentDate(LocalDateTime.now())
+                .course(course)
+                .payment(payment)
+                .build();
+        courseEnrollmentDetailRepository.save(courseEnrollmentDetail);
+        return "course enrolled successfully";
     }
 
-    public String unEnrollToCourse(Long enrollmentId) {
-        courseEnrollmentRepository.deleteById(enrollmentId);
-        return "Course UnEnrolled Successfully...!";
+    public GetEnrolledCoursesResponse getCourses(Long userId) throws EntityNotFoundException {
+        Enrollment enrollment = getEnrollmentByUser(userId);
+        if (enrollment != null) {
+            List<Course> courses = enrollment.getCourses();
+            return new GetEnrolledCoursesResponse(
+                    courses.stream().map(course -> new GetEnrolledCoursesResponse.EnrolledCourse(
+                            course.getId(),
+                            course.getName(),
+                            course.getDescription(),
+                            course.getDuration(),
+                            courseEnrollmentDetailRepository.findByCourse(course).getEnrollmentDate(),
+                            getUserFullName(course.getTutor().getUser()),
+                            getCourseImage(course.getImageUrl()),
+                            course.getRating()
+                    )).collect(Collectors.toList())
+            );
+        }
+        return new GetEnrolledCoursesResponse(new ArrayList<>());
+    }
+
+    public Enrollment getEnrollmentByUser(Long id) throws EntityNotFoundException {
+        User user = getUser(id);
+        return enrollmentRepository.findByUser(user);
+    }
+
+    private Long getLong(String id) {
+        return Long.parseLong(id);
+    }
+
+    private User getUser(Long id) throws EntityNotFoundException {
+        if (!userRepository.findById(id).isPresent()) {
+            throw new EntityNotFoundException("USER_NOT_FOUND");
+        }
+        return userRepository.findById(id).get();
+    }
+
+    private Course getCourse(Long id) throws EntityNotFoundException {
+        if (!courseRepository.findById(id).isPresent()) {
+            throw new EntityNotFoundException("COURSE_NOT_FOUND");
+        }
+        return courseRepository.findById(id).get();
+    }
+
+    private String getUserFullName(User user) {
+        return user.getFirstName() + " " + user.getLastName();
+    }
+
+    @SneakyThrows
+    private byte[] getCourseImage(String url) {
+        if (url != null) {
+            String[] filename = url.trim().split("http://localhost:8080/api/courses/uploads/Courses/");
+            return courseService.getImageByte(filename[1]);
+        }
+        return null;
     }
 }

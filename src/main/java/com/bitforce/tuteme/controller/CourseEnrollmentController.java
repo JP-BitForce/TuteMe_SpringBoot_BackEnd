@@ -1,32 +1,103 @@
 package com.bitforce.tuteme.controller;
 
-import com.bitforce.tuteme.model.CourseEnrollment;
+import com.bitforce.tuteme.dto.ApiResponse;
+import com.bitforce.tuteme.dto.ControllerRequest.EnrollCourseAndPayControllerRequest;
+import com.bitforce.tuteme.dto.ControllerRequest.EnrollCourseByBankControllerRequest;
+import com.bitforce.tuteme.dto.ServiceRequest.EnrollCourseAndPayRequest;
+import com.bitforce.tuteme.dto.ServiceResponse.GetEnrolledCoursesResponse;
+import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.service.CourseEnrollmentService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Map;
-
-@CrossOrigin(origins = "*", allowedHeaders = "*")
+@CrossOrigin(origins = "*")
 @AllArgsConstructor
 @RestController
 @RequestMapping("/api/courses/enrollment")
 public class CourseEnrollmentController {
+    private static final Logger log = LoggerFactory.getLogger(CourseEnrollmentController.class);
     private final CourseEnrollmentService courseEnrollmentService;
 
-    @PostMapping
-    public CourseEnrollment enrollToCourse(@RequestParam Long courseId, @RequestParam Long studentId ){
-        return courseEnrollmentService.enrollToCourse(courseId,studentId);
+    @PostMapping(value = "/byBank", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> enrollCourseByBankPay(@RequestPart("request") EnrollCourseByBankControllerRequest request,
+                                                   @RequestPart("file") MultipartFile file
+    ) {
+        try {
+            EnrollCourseAndPayRequest enrollCourseAndPayRequest = EnrollCourseAndPayRequest
+                    .builder()
+                    .firstName(request.getFirstName())
+                    .lastName(request.getLastName())
+                    .email(request.getEmail())
+                    .userId(request.getUserId())
+                    .courseId(request.getCourseId())
+                    .paymentType(request.getPaymentType())
+                    .depositedAt(request.getDepositedAt())
+                    .formData(file)
+                    .paymentMethod("bank")
+                    .build();
+            String response = courseEnrollmentService.handleEnrollment(enrollCourseAndPayRequest);
+            ApiResponse apiResponse = new ApiResponse(true, response);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to search course by value");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
-    @GetMapping("/{studentId}/{page}")
-    public ResponseEntity<Map<String, Object>> getAllEnrolledCoursesForStudent(@PathVariable Long studentId, @PathVariable int page){
-        return courseEnrollmentService.getAllEnrolledCoursesForStudent(studentId,page);
+    @PostMapping(value = "/byPaypal")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> enrollCoursebyPaypalPay(@RequestBody EnrollCourseAndPayControllerRequest request) {
+        try {
+            EnrollCourseAndPayRequest enrollCourseAndPayRequest = new EnrollCourseAndPayRequest(
+                    request.getFirstName(),
+                    request.getLastName(),
+                    request.getAddress(),
+                    request.getCity(),
+                    request.getZip(),
+                    request.getMobile(),
+                    request.getEmail(),
+                    request.getCvv(),
+                    request.getExp(),
+                    request.getCardNo(),
+                    null,
+                    null,
+                    "paypal",
+                    request.getUserId(),
+                    request.getCourseId(),
+                    request.getPaymentType()
+            );
+            String response = courseEnrollmentService.handleEnrollment(enrollCourseAndPayRequest);
+            ApiResponse apiResponse = new ApiResponse(true, response);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to search course by value");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
-    @DeleteMapping("/{enrollmentId}")
-    private String unEnrollToCourse(@PathVariable Long enrollmentId){
-        return courseEnrollmentService.unEnrollToCourse(enrollmentId);
+    @GetMapping(value = "/get_enrolled_courses")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> getEnrolledCourses(@RequestParam Long uId) {
+        try {
+            GetEnrolledCoursesResponse response = courseEnrollmentService.getCourses(uId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to get enrolled courses for userId: {}", uId);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            log.error("Unable to get enrolled courses for userId: {}", uId);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 }
