@@ -12,12 +12,6 @@ import java.util.List;
 public interface CourseRepository extends JpaRepository<Course,Long> {
     Page<Course> findAllByNameContaining(String value, Pageable pageable);
 
-    Page<Course> findAllByCourseCategoryInAndTutorIn(
-            List<CourseCategory> courseCategories,
-            List<Tutor> tutors,
-            Pageable pageable
-    );
-
     Page<Course> findAllByCourseCategoryInAndTutorInAndCourseTypeInAndCoursePriceCategoryIn(
             List<CourseCategory> courseCategories,
             List<Tutor> tutors,

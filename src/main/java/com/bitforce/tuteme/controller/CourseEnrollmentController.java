@@ -48,7 +48,7 @@ public class CourseEnrollmentController {
             ApiResponse apiResponse = new ApiResponse(true, response);
             return new ResponseEntity<>(apiResponse, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Unable to search course by value");
+            log.error("Unable to enroll course with id: {}", request.getCourseId());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
@@ -56,31 +56,30 @@ public class CourseEnrollmentController {
     @PostMapping(value = "/byPaypal")
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<?> enrollCoursebyPaypalPay(@RequestBody EnrollCourseAndPayControllerRequest request) {
+    public ResponseEntity<?> enrollCourseByPaypalPay(@RequestBody EnrollCourseAndPayControllerRequest request) {
         try {
-            EnrollCourseAndPayRequest enrollCourseAndPayRequest = new EnrollCourseAndPayRequest(
-                    request.getFirstName(),
-                    request.getLastName(),
-                    request.getAddress(),
-                    request.getCity(),
-                    request.getZip(),
-                    request.getMobile(),
-                    request.getEmail(),
-                    request.getCvv(),
-                    request.getExp(),
-                    request.getCardNo(),
-                    null,
-                    null,
-                    "paypal",
-                    request.getUserId(),
-                    request.getCourseId(),
-                    request.getPaymentType()
-            );
+            EnrollCourseAndPayRequest enrollCourseAndPayRequest = EnrollCourseAndPayRequest
+                    .builder()
+                    .firstName(request.getFirstName())
+                    .lastName(request.getLastName())
+                    .address(request.getAddress())
+                    .city(request.getCity())
+                    .zip(request.getZip())
+                    .mobile(request.getMobile())
+                    .email(request.getEmail())
+                    .cvv(request.getCvv())
+                    .exp(request.getExp())
+                    .userId(request.getUserId())
+                    .courseId(request.getCourseId())
+                    .paymentType(request.getPaymentType())
+                    .paymentMethod("paypal")
+                    .cardNo(request.getCardNo())
+                    .build();
             String response = courseEnrollmentService.handleEnrollment(enrollCourseAndPayRequest);
             ApiResponse apiResponse = new ApiResponse(true, response);
             return new ResponseEntity<>(apiResponse, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Unable to search course by value");
+            log.error("Unable to enroll course with id: {}", request.getCourseId());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
