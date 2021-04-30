@@ -67,6 +67,7 @@ public class CourseService {
                 courseDTO.setTutorName(course.getTutor().getUser().getFirstName() + " " + course.getTutor().getUser().getLastName());
                 courseDTO.setImageUrl(getCourseImage(course.getImageUrl()));
                 courseDTO.setEnrolledByCurrentUser(isCurrentUserEnrolled(userId, course));
+                courseDTO.setSchedules(course.getSchedules());
                 courseDTOS.add(courseDTO);
             }
 
@@ -174,6 +175,7 @@ public class CourseService {
             courseDTO.setTutorName(course.getTutor().getUser().getFirstName() + " " + course.getTutor().getUser().getLastName());
             courseDTO.setImageUrl(getCourseImage(course.getImageUrl()));
             courseDTO.setEnrolledByCurrentUser(isCurrentUserEnrolled(userId, course));
+            courseDTO.setSchedules(course.getSchedules());
             courseDTOS.add(courseDTO);
         }
 

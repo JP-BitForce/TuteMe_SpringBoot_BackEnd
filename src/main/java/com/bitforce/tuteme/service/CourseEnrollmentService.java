@@ -22,13 +22,15 @@ public class CourseEnrollmentService {
     private final PaymentService paymentService;
     private final CourseService courseService;
     private final CourseEnrollmentDetailRepository courseEnrollmentDetailRepository;
+    private final ResourceRepository resourceRepository;
 
     public CourseEnrollmentService(CourseRepository courseRepository,
                                    UserRepository userRepository,
                                    EnrollmentRepository enrollmentRepository,
                                    PaymentService paymentService,
                                    CourseService courseService,
-                                   CourseEnrollmentDetailRepository courseEnrollmentDetailRepository
+                                   CourseEnrollmentDetailRepository courseEnrollmentDetailRepository,
+                                   ResourceRepository resourceRepository
     ) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -36,6 +38,7 @@ public class CourseEnrollmentService {
         this.paymentService = paymentService;
         this.courseService = courseService;
         this.courseEnrollmentDetailRepository = courseEnrollmentDetailRepository;
+        this.resourceRepository = resourceRepository;
     }
 
     public String handleEnrollment(EnrollCourseAndPayRequest request) throws EntityNotFoundException {
@@ -82,7 +85,9 @@ public class CourseEnrollmentService {
                             courseEnrollmentDetailRepository.findByCourse(course).getEnrollmentDate(),
                             getUserFullName(course.getTutor().getUser()),
                             getCourseImage(course.getImageUrl()),
-                            course.getRating()
+                            course.getRating(),
+                            course.getSchedules(),
+                            resourceRepository.findAllByCourseOrderByUploadedDesc(course)
                     )).collect(Collectors.toList())
             );
         }

@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Entity
 @Data
@@ -23,6 +24,7 @@ public class Course {
 
     @ManyToOne
     private Tutor tutor;
+
     @ManyToOne
     private CourseCategory courseCategory;
 
@@ -31,4 +33,7 @@ public class Course {
 
     @OneToOne
     private CourseType courseType;
+
+    @OneToMany
+    private List<Schedule> schedules;
 }
