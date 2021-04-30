@@ -1,5 +1,7 @@
 package com.bitforce.tuteme.dto.ServiceResponse;
 
+import com.bitforce.tuteme.model.Resource;
+import com.bitforce.tuteme.model.Schedule;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,5 +28,7 @@ public class GetEnrolledCoursesResponse {
         private String tutorName;
         private byte[] courseImg;
         private double rating;
+        private List<Schedule> schedules;
+        private List<Resource> resources;
     }
 }

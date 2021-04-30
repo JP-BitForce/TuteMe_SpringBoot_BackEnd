@@ -1,10 +1,12 @@
 package com.bitforce.tuteme.dto;
 
+import com.bitforce.tuteme.model.Schedule;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -22,4 +24,5 @@ public class CourseDTO {
     private Long categoryId;
     private String categoryName;
     private boolean isEnrolledByCurrentUser;
+    private List<Schedule> schedules;
 }
