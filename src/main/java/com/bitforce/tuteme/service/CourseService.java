@@ -187,26 +187,17 @@ public class CourseService {
     }
 
     private boolean isCurrentUserEnrolled(Long userId, Course course) throws EntityNotFoundException {
-        boolean isEnrolled = false;
-        Enrollment enrollment = getEnrollmentByUser(userId);
-        if (enrollment != null) {
-            List<Course> courses = enrollment.getCourses();
-            for (Course enrolledCourse : courses) {
-                if (enrolledCourse == course) {
-                    isEnrolled = true;
-                    break;
-                }
-            }
-        }
-        return isEnrolled;
-    }
-
-    private Enrollment getEnrollmentByUser(Long id) throws EntityNotFoundException {
-        if (!userRepository.findById(id).isPresent()) {
+        if (!userRepository.findById(userId).isPresent()) {
             throw new EntityNotFoundException("USER_NOT_FOUND");
         }
-        User user = userRepository.findById(id).get();
-        return enrollmentRepository.findByUser(user);
+        User user = userRepository.findById(userId).get();
+
+        boolean isEnrolled = false;
+        Enrollment enrollment = enrollmentRepository.findByCourseAndUser(course, user);
+        if(enrollment != null) {
+            isEnrolled = true;
+        }
+        return isEnrolled;
     }
 
     public String getUserFullName(User user) {

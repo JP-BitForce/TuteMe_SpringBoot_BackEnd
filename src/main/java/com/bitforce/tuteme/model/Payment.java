@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,6 +22,13 @@ public class Payment {
     private String paymentMethod;
 
     private String PaymentType;
+
+    private LocalDateTime paymentAt;
+
+    private BigDecimal amount;
+
+    @OneToOne
+    private Course course;
 
     @OneToOne
     private User user;

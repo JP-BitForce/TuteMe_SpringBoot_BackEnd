@@ -15,4 +15,5 @@ public class EnrollCourseByBankControllerRequest {
     private String courseId;
     private String paymentType;
     private String depositedAt;
+    private String amount;
 }

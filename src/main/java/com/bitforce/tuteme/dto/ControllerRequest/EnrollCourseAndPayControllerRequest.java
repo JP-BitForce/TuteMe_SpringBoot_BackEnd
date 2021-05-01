@@ -21,4 +21,5 @@ public class EnrollCourseAndPayControllerRequest {
     private String userId;
     private String courseId;
     private String paymentType;
+    private String amount;
 }
