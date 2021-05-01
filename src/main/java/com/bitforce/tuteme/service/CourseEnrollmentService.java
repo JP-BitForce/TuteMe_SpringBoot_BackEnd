@@ -6,11 +6,11 @@ import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.*;
 import com.bitforce.tuteme.repository.*;
 import lombok.SneakyThrows;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,7 +21,6 @@ public class CourseEnrollmentService {
     private final EnrollmentRepository enrollmentRepository;
     private final PaymentService paymentService;
     private final CourseService courseService;
-    private final CourseEnrollmentDetailRepository courseEnrollmentDetailRepository;
     private final ResourceRepository resourceRepository;
 
     public CourseEnrollmentService(CourseRepository courseRepository,
@@ -29,7 +28,6 @@ public class CourseEnrollmentService {
                                    EnrollmentRepository enrollmentRepository,
                                    PaymentService paymentService,
                                    CourseService courseService,
-                                   CourseEnrollmentDetailRepository courseEnrollmentDetailRepository,
                                    ResourceRepository resourceRepository
     ) {
         this.courseRepository = courseRepository;
@@ -37,7 +35,6 @@ public class CourseEnrollmentService {
         this.enrollmentRepository = enrollmentRepository;
         this.paymentService = paymentService;
         this.courseService = courseService;
-        this.courseEnrollmentDetailRepository = courseEnrollmentDetailRepository;
         this.resourceRepository = resourceRepository;
     }
 
@@ -46,57 +43,35 @@ public class CourseEnrollmentService {
         User user = getUser(uId);
         Long cId = getLong(request.getCourseId());
         Course course = getCourse(cId);
-        Enrollment enrollment = enrollmentRepository.findByUser(user);
-        List<Course> courses = new ArrayList<>();
-        if (enrollment == null) {
-            courses.add(course);
-            enrollment = Enrollment
-                    .builder()
-                    .user(user)
-                    .courses(courses)
-                    .build();
-        } else {
-            courses = enrollment.getCourses();
-            courses.add(course);
-            enrollment.setCourses(courses);
-        }
-        enrollmentRepository.save(enrollment);
-        Payment payment = paymentService.createNewPayment(request);
-        CourseEnrollmentDetail courseEnrollmentDetail = CourseEnrollmentDetail
+        Payment payment = paymentService.createNewPayment(request, course, user);
+        Enrollment enrollment = Enrollment
                 .builder()
-                .enrollmentDate(LocalDateTime.now())
                 .course(course)
                 .payment(payment)
+                .user(user)
+                .enrolledAt(LocalDateTime.now())
                 .build();
-        courseEnrollmentDetailRepository.save(courseEnrollmentDetail);
+        enrollmentRepository.save(enrollment);
         return "course enrolled successfully";
     }
 
-    public GetEnrolledCoursesResponse getCourses(Long userId) throws EntityNotFoundException {
-        Enrollment enrollment = getEnrollmentByUser(userId);
-        if (enrollment != null) {
-            List<Course> courses = enrollment.getCourses();
-            return new GetEnrolledCoursesResponse(
-                    courses.stream().map(course -> new GetEnrolledCoursesResponse.EnrolledCourse(
-                            course.getId(),
-                            course.getName(),
-                            course.getDescription(),
-                            course.getDuration(),
-                            courseEnrollmentDetailRepository.findByCourse(course).getEnrollmentDate(),
-                            getUserFullName(course.getTutor().getUser()),
-                            getCourseImage(course.getImageUrl()),
-                            course.getRating(),
-                            course.getSchedules(),
-                            resourceRepository.findAllByCourseOrderByUploadedDesc(course)
-                    )).collect(Collectors.toList())
-            );
-        }
-        return new GetEnrolledCoursesResponse(new ArrayList<>());
-    }
-
-    public Enrollment getEnrollmentByUser(Long id) throws EntityNotFoundException {
-        User user = getUser(id);
-        return enrollmentRepository.findByUser(user);
+    public GetEnrolledCoursesResponse getCourses(Long userId, int page) throws EntityNotFoundException {
+        User user = getUser(userId);
+        Page<Enrollment> enrollments = enrollmentRepository.findByUser(user, PageRequest.of(page, 10));
+        return new GetEnrolledCoursesResponse(
+                enrollments.stream().map(enrollment -> new GetEnrolledCoursesResponse.EnrolledCourse(
+                        enrollment.getCourse().getId(),
+                        enrollment.getCourse().getName(),
+                        enrollment.getCourse().getDescription(),
+                        enrollment.getCourse().getDuration(),
+                        enrollment.getEnrolledAt(),
+                        getUserFullName(enrollment.getCourse().getTutor().getUser()),
+                        getCourseImage(enrollment.getCourse().getImageUrl()),
+                        enrollment.getCourse().getRating(),
+                        enrollment.getCourse().getSchedules(),
+                        resourceRepository.findAllByCourseOrderByUploadedDesc(enrollment.getCourse())
+                )).collect(Collectors.toList())
+        );
     }
 
     private Long getLong(String id) {

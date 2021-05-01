@@ -54,9 +54,8 @@ public class StudentProfileService {
         UserAuth userAuth = userAuthRepository.findByUserId(userId);
         Student student = studentRepository.findByUserId(userId);
 
-        List<Course> courses = getEnrolledCourses(user);
-        int courseCount = courses.size();
-        int tutorsCount = courses.size();
+        int courseCount = getEnrolledCourses(user).size();
+        int tutorsCount = getEnrolledCourses(user).size();
 
         BeanUtils.copyProperties(user, studentProfileDTO);
         BeanUtils.copyProperties(student, studentProfileDTO);
@@ -123,7 +122,7 @@ public class StudentProfileService {
         return fileStorageService.convert(filename);
     }
 
-    private List<Course> getEnrolledCourses(User user) {
-        return enrollmentRepository.findByUser(user).getCourses();
+    private List<Enrollment> getEnrolledCourses(User user) {
+        return enrollmentRepository.findAllByUser(user);
     }
 }

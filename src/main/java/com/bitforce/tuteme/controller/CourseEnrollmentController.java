@@ -43,6 +43,7 @@ public class CourseEnrollmentController {
                     .depositedAt(request.getDepositedAt())
                     .formData(file)
                     .paymentMethod("bank")
+                    .amount(request.getAmount())
                     .build();
             String response = courseEnrollmentService.handleEnrollment(enrollCourseAndPayRequest);
             ApiResponse apiResponse = new ApiResponse(true, response);
@@ -74,6 +75,7 @@ public class CourseEnrollmentController {
                     .paymentType(request.getPaymentType())
                     .paymentMethod("paypal")
                     .cardNo(request.getCardNo())
+                    .amount(request.getAmount())
                     .build();
             String response = courseEnrollmentService.handleEnrollment(enrollCourseAndPayRequest);
             ApiResponse apiResponse = new ApiResponse(true, response);
@@ -87,9 +89,9 @@ public class CourseEnrollmentController {
     @GetMapping(value = "/get_enrolled_courses")
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<?> getEnrolledCourses(@RequestParam Long uId) {
+    public ResponseEntity<?> getEnrolledCourses(@RequestParam Long uId, @RequestParam int page) {
         try {
-            GetEnrolledCoursesResponse response = courseEnrollmentService.getCourses(uId);
+            GetEnrolledCoursesResponse response = courseEnrollmentService.getCourses(uId, page);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (EntityNotFoundException e) {
             log.error("Unable to get enrolled courses for userId: {}", uId);
