@@ -4,10 +4,7 @@ import com.bitforce.tuteme.dto.ServiceRequest.EnrollCourseAndPayRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetPaymentsResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.*;
-import com.bitforce.tuteme.repository.BankPaymentRepository;
-import com.bitforce.tuteme.repository.PaymentRepository;
-import com.bitforce.tuteme.repository.PaypalRepository;
-import com.bitforce.tuteme.repository.UserRepository;
+import com.bitforce.tuteme.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -19,6 +16,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,17 +27,20 @@ public class PaymentService {
     private final BankPaymentRepository bankPaymentRepository;
     private final PaypalRepository paypalRepository;
     private final UserRepository userRepository;
+    private final PaymentPlanRepository paymentPlanRepository;
     private final FileStorageService fileStorageService = new FileStorageService("BankSlips");
 
     public PaymentService(PaymentRepository paymentRepository,
                           BankPaymentRepository bankPaymentRepository,
                           PaypalRepository paypalRepository,
-                          UserRepository userRepository
+                          UserRepository userRepository,
+                          PaymentPlanRepository paymentPlanRepository
     ) {
         this.paymentRepository = paymentRepository;
         this.bankPaymentRepository = bankPaymentRepository;
         this.paypalRepository = paypalRepository;
         this.userRepository = userRepository;
+        this.paymentPlanRepository = paymentPlanRepository;
     }
 
     public String getBankSlipUrl(MultipartFile file) {
@@ -117,6 +118,40 @@ public class PaymentService {
                 payments.getTotalPages(),
                 payments.getNumber()
         );
+    }
+
+    public String upgradePlan(Long userId, String plan) throws EntityNotFoundException {
+        User user = getUser(userId);
+        PaymentPlan paymentPlan = paymentPlanRepository.findByUser(user);
+        if (paymentPlan == null) {
+            PaymentPlan newPlan = PaymentPlan
+                    .builder()
+                    .plan(plan)
+                    .user(user)
+                    .build();
+            paymentPlanRepository.save(newPlan);
+        } else {
+            paymentPlan.setPlan(plan);
+            paymentPlanRepository.save(paymentPlan);
+        }
+        return "Payment plan updated successfully!";
+    }
+
+    public String getPaymentPlanByUser(Long userId) throws EntityNotFoundException {
+        User user = getUser(userId);
+        PaymentPlan paymentPlan = paymentPlanRepository.findByUser(user);
+        if (paymentPlan == null) {
+            throw new EntityNotFoundException("PAYMENT_PLAN_NOT_FOUND");
+        }
+        return paymentPlan.getPlan();
+    }
+
+    private User getUser(Long userId) throws EntityNotFoundException {
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (!userOptional.isPresent()) {
+            throw new EntityNotFoundException("USER_NOT_FOUND");
+        }
+        return userOptional.get();
     }
 
     private LocalDateTime parse(String date) {

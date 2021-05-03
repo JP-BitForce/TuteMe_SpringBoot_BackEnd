@@ -4,6 +4,7 @@ import com.bitforce.tuteme.dto.ControllerRequest.FilterCoursesControllerRequest;
 import com.bitforce.tuteme.dto.ControllerRequest.SearchCourseControllerRequest;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
 import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
+import com.bitforce.tuteme.dto.ServiceResponse.GetCourseByIdResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
 import com.bitforce.tuteme.model.Course;
 import com.bitforce.tuteme.service.CourseService;
@@ -109,6 +110,18 @@ public class CourseController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Unable to search course by value");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @GetMapping("/get_course_by_id/{id}")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public GetCourseByIdResponse getCourseById(@PathVariable Long id) {
+        try {
+            return courseService.getCourseById(id);
+        } catch (Exception e) {
+            log.error("Unable to get course by id: {}", id);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
