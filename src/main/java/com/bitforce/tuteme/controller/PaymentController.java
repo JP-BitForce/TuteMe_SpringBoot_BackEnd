@@ -1,5 +1,6 @@
 package com.bitforce.tuteme.controller;
 
+import com.bitforce.tuteme.dto.ApiResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetPaymentsResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.service.PaymentService;
@@ -37,6 +38,40 @@ public class PaymentController {
         } catch (Exception e) {
             log.error("Unable to get payments for userId: {}", uId);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/upgrade_plan")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> filterCourses(@RequestParam long uId, @RequestParam String plan) {
+        try {
+            String response = paymentService.upgradePlan(uId, plan);
+            ApiResponse apiResponse = new ApiResponse(true, response);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to upgrade plan for userId: {}, due to bad request", uId);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad request, please try valid value");
+        } catch (Exception e) {
+            log.error("Unable to upgrade plan for userId: {}", uId);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Server error, please try again");
+        }
+    }
+
+    @GetMapping(value = "/get_payment_plan/{userId}")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> getPaymentPlan(@PathVariable Long userId) {
+        try {
+            String response = paymentService.getPaymentPlanByUser(userId);
+            ApiResponse apiResponse = new ApiResponse(true, response);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to upgrade plan for userId: {}, due to bad request", userId);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad request, please try valid value");
+        } catch (Exception e) {
+            log.error("Unable to upgrade plan for userId: {}", userId);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Server error, please try again");
         }
     }
 }

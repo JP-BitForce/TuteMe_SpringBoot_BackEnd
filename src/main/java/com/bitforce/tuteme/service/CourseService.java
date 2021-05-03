@@ -3,6 +3,7 @@ package com.bitforce.tuteme.service;
 import com.bitforce.tuteme.dto.CourseDTO;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
 import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
+import com.bitforce.tuteme.dto.ServiceResponse.GetCourseByIdResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.*;
@@ -186,6 +187,26 @@ public class CourseService {
         return response;
     }
 
+    public GetCourseByIdResponse getCourseById(Long courseId) {
+        Optional<Course> courseOptional = courseRepository.findById(courseId);
+        if (courseOptional.isPresent()) {
+            Course course = courseOptional.get();
+            return new GetCourseByIdResponse(
+                    course.getId(),
+                    course.getName(),
+                    course.getDescription(),
+                    course.getDuration(),
+                    getUserFullName(course.getTutor().getUser()),
+                    getCourseImage(course.getImageUrl()),
+                    course.getRating(),
+                    course.getPrice(),
+                    course.getTutor().getId()
+            );
+        } else {
+            return null;
+        }
+    }
+
     private boolean isCurrentUserEnrolled(Long userId, Course course) throws EntityNotFoundException {
         if (!userRepository.findById(userId).isPresent()) {
             throw new EntityNotFoundException("USER_NOT_FOUND");
@@ -194,7 +215,7 @@ public class CourseService {
 
         boolean isEnrolled = false;
         Enrollment enrollment = enrollmentRepository.findByCourseAndUser(course, user);
-        if(enrollment != null) {
+        if (enrollment != null) {
             isEnrolled = true;
         }
         return isEnrolled;
