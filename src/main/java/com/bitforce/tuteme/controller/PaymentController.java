@@ -1,6 +1,7 @@
 package com.bitforce.tuteme.controller;
 
 import com.bitforce.tuteme.dto.ApiResponse;
+import com.bitforce.tuteme.dto.ServiceResponse.GetPaymentSummaryFactsResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetPaymentsResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.service.PaymentService;
@@ -71,6 +72,38 @@ public class PaymentController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad request, please try valid value");
         } catch (Exception e) {
             log.error("Unable to upgrade plan for userId: {}", userId);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Server error, please try again");
+        }
+    }
+
+    @GetMapping(value = "/get_payment_summary_facts/{userId}")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> getPaymentSummaryFacts(@PathVariable Long userId) {
+        try {
+            GetPaymentSummaryFactsResponse response = paymentService.getPaymentSummaryFacts(userId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to get payment summary facts for userId: {}, due to bad request", userId);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad request, please try valid value");
+        } catch (Exception e) {
+            log.error("Unable to get payment summary facts for userId: {}", userId);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Server error, please try again");
+        }
+    }
+
+    @PostMapping(value = "/delete_payment_card")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> deletePaymentCard(@RequestParam long uId, @RequestParam Long cardId) {
+        try {
+            GetPaymentSummaryFactsResponse response = paymentService.deletePaymentCard(uId, cardId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to delete payment card for userId: {}, due to bad request", uId);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad request, please try valid value");
+        } catch (Exception e) {
+            log.error("Unable to delete payment card for userId: {}, with cardId: {}", uId, cardId);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Server error, please try again");
         }
     }

@@ -28,4 +28,5 @@ public class EnrollCourseAndPayRequest {
     private String courseId;
     private String paymentType;
     private String amount;
+    private String cardType;
 }

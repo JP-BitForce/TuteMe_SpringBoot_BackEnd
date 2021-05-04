@@ -1,6 +1,7 @@
 package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.dto.ServiceRequest.EnrollCourseAndPayRequest;
+import com.bitforce.tuteme.dto.ServiceResponse.GetPaymentSummaryFactsResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetPaymentsResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.*;
@@ -16,6 +17,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -28,19 +31,22 @@ public class PaymentService {
     private final PaypalRepository paypalRepository;
     private final UserRepository userRepository;
     private final PaymentPlanRepository paymentPlanRepository;
+    private final PaymentCardRepository paymentCardRepository;
     private final FileStorageService fileStorageService = new FileStorageService("BankSlips");
 
     public PaymentService(PaymentRepository paymentRepository,
                           BankPaymentRepository bankPaymentRepository,
                           PaypalRepository paypalRepository,
                           UserRepository userRepository,
-                          PaymentPlanRepository paymentPlanRepository
+                          PaymentPlanRepository paymentPlanRepository,
+                          PaymentCardRepository paymentCardRepository
     ) {
         this.paymentRepository = paymentRepository;
         this.bankPaymentRepository = bankPaymentRepository;
         this.paypalRepository = paypalRepository;
         this.userRepository = userRepository;
         this.paymentPlanRepository = paymentPlanRepository;
+        this.paymentCardRepository = paymentCardRepository;
     }
 
     public String getBankSlipUrl(MultipartFile file) {
@@ -80,6 +86,7 @@ public class PaymentService {
                     .payment(payment)
                     .build();
             paypalRepository.save(paypalPayment);
+            savePaymentCard(request.getCardNo(), user, request.getCardType());
         } else {
             BankPayment bankPayment = BankPayment
                     .builder()
@@ -144,6 +151,58 @@ public class PaymentService {
             throw new EntityNotFoundException("PAYMENT_PLAN_NOT_FOUND");
         }
         return paymentPlan.getPlan();
+    }
+
+    public GetPaymentSummaryFactsResponse getPaymentSummaryFacts(Long userId) throws EntityNotFoundException {
+        String plan = getPaymentPlanByUser(userId);
+        List<String> bankAccounts = new ArrayList<>();
+        bankAccounts.add("1234567890");
+        List<PaymentCard> paymentCards = paymentCardRepository.findAllByUser(getUser(userId));
+        return new GetPaymentSummaryFactsResponse(
+                plan,
+                bankAccounts,
+                paymentCards.stream().map(paymentCard -> new GetPaymentSummaryFactsResponse.Card(
+                        paymentCard.getId(),
+                        paymentCard.getCardNo(),
+                        paymentCard.getType()
+                )).collect(Collectors.toList())
+        );
+    }
+
+    public GetPaymentSummaryFactsResponse deletePaymentCard(Long userId, Long cardId) throws EntityNotFoundException {
+        String plan = getPaymentPlanByUser(userId);
+        List<String> bankAccounts = new ArrayList<>();
+        bankAccounts.add("1234567890");
+        PaymentCard paymentCard = paymentCardRepository.findByCardNo(cardId);
+        if (paymentCard == null) {
+            log.error("payment card not found for id:{}", cardId);
+            throw new EntityNotFoundException("PAYMENT_CARD_NOT_FOUND");
+        }
+        paymentCardRepository.delete(paymentCard);
+        List<PaymentCard> paymentCards = paymentCardRepository.findAllByUser(getUser(userId));
+        return new GetPaymentSummaryFactsResponse(
+                plan,
+                bankAccounts,
+                paymentCards.stream().map(card -> new GetPaymentSummaryFactsResponse.Card(
+                        card.getId(),
+                        card.getCardNo(),
+                        card.getType()
+                )).collect(Collectors.toList())
+        );
+    }
+
+    private void savePaymentCard(String cardNo, User user, String type) {
+        Long card = Long.parseLong(cardNo);
+        PaymentCard paymentCard = paymentCardRepository.findByCardNo(card);
+        if (paymentCard == null) {
+            PaymentCard newCard = PaymentCard
+                    .builder()
+                    .cardNo(card)
+                    .type(type)
+                    .user(user)
+                    .build();
+            paymentCardRepository.save(newCard);
+        }
     }
 
     private User getUser(Long userId) throws EntityNotFoundException {
