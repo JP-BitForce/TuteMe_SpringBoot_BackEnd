@@ -76,6 +76,7 @@ public class CourseEnrollmentController {
                     .paymentMethod("paypal")
                     .cardNo(request.getCardNo())
                     .amount(request.getAmount())
+                    .cardType(request.getCardType())
                     .build();
             String response = courseEnrollmentService.handleEnrollment(enrollCourseAndPayRequest);
             ApiResponse apiResponse = new ApiResponse(true, response);
