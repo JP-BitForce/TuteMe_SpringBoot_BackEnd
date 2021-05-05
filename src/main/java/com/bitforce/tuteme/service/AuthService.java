@@ -108,6 +108,7 @@ public class AuthService {
         } else if (userType.equals("tutor")) {
             Tutor tutor = new Tutor();
             tutor.setUser(newUser);
+            tutor.setFullName(signUpRequest.getFirstName() + " " + signUpRequest.getLastName() );
             tutorRepository.save(tutor);
         }
         userAuth.setUser(newUser);

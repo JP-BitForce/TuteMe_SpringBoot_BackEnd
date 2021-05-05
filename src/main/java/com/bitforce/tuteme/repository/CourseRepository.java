@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface CourseRepository extends JpaRepository<Course,Long> {
+public interface CourseRepository extends JpaRepository<Course, Long> {
     Page<Course> findAllByNameContaining(String value, Pageable pageable);
 
     Page<Course> findAllByCourseCategoryInAndTutorInAndCourseTypeInAndCoursePriceCategoryIn(
@@ -19,4 +19,8 @@ public interface CourseRepository extends JpaRepository<Course,Long> {
             List<CoursePriceCategory> coursePriceCategories,
             Pageable pageable
     );
+
+    Course findByTutor(Tutor tutor);
+
+    Page<Course> findAllByCourseCategory(CourseCategory courseCategory, Pageable pageable);
 }
