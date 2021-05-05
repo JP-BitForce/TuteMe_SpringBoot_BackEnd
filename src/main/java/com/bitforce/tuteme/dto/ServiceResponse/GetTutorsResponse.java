@@ -29,5 +29,11 @@ public class GetTutorsResponse {
         private String district;
         private String description;
         private Double rating;
+        private String subject;
+        private Long subjectId;
+        private String facebook;
+        private String twitter;
+        private String instagram;
+        private String linkedIn;
     }
 }
