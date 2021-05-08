@@ -64,7 +64,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         "/api/landingPage/**",
                         "/api/auth/sign-in"
                 ).permitAll()
-                .anyRequest().authenticated();
+                .anyRequest().authenticated()
+                .and()
+                .oauth2Login();
         http.addFilterBefore(authenticationFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 }
