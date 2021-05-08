@@ -16,12 +16,12 @@ public class SkillController {
     private final SkillService skillService;
 
     @GetMapping()
-    public List<Skill> getAllSkills(){
+    public List<Skill> getAllSkills() {
         return skillService.getAllSkills();
     }
 
     @PostMapping
-    public Skill createSkill(@RequestBody Skill newSkill){
+    public Skill createSkill(@RequestBody Skill newSkill) {
         return skillService.createSkill(newSkill);
     }
 

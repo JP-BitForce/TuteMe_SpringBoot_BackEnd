@@ -1,6 +1,5 @@
 package com.bitforce.tuteme.service;
 
-import com.bitforce.tuteme.dto.ControllerResponse.UserSkillsResponse;
 import com.bitforce.tuteme.dto.UserSkillsDTO;
 import com.bitforce.tuteme.model.Skill;
 import com.bitforce.tuteme.model.UserSkills;
@@ -22,23 +21,19 @@ public class UserSkillService {
     private final SkillRepository skillRepository;
 
 
-    public UserSkillsResponse getAllUserSkillsForUser(Long userId) {
+    public Set<Skill> getAllUserSkillsForUser(Long userId) {
         UserSkills userSkills = userSkillsRepository.findByUserId(userId);
-        UserSkillsResponse userSkillsResponse = new UserSkillsResponse();
-
-        userSkillsResponse.setId(userSkills.getId());
-        userSkillsResponse.setUserId(userSkills.getUser().getId());
-        userSkillsResponse.setSkills(userSkills.getSkills());
-        return userSkillsResponse;
+        Set<Skill> skills = userSkills.getSkills();
+        return skills;
     }
 
     public UserSkills createUserSkills(UserSkillsDTO newSkills) {
         Set<Long> skillIds = newSkills.getSkills();
         Set<Skill> skills = new HashSet<>();
-
         UserSkills userSkills;
-        if(userSkillsRepository.existsByUserId(newSkills.getUserId())){
-            userSkills= userSkillsRepository.findByUserId(newSkills.getUserId());
+
+        if (userSkillsRepository.existsByUserId(newSkills.getUserId())) {
+            userSkills = userSkillsRepository.findByUserId(newSkills.getUserId());
             skills.addAll(userSkills.getSkills());
             if (skillIds != null) {
                 skillIds.forEach(skill_id -> {
@@ -48,8 +43,8 @@ public class UserSkillService {
                 });
                 userSkills.setSkills(skills);
             }
-        }else {
-            userSkills= new UserSkills();
+        } else {
+            userSkills = new UserSkills();
             userSkills.setUser(userRepository.findById(newSkills.getUserId()).get());
             if (skillIds != null) {
                 skillIds.forEach(skill_id -> {
