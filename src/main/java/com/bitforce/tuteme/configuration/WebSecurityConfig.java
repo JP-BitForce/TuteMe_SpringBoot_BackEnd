@@ -63,7 +63,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         "/api/auth/**",
                         "/api/landingPage/**",
                         "/api/auth/sign-in",
-                        "/videochat"
+                        "/videochat",
+                        "/ws/**"
                 ).permitAll()
                 .anyRequest().authenticated();
         http.addFilterBefore(authenticationFilter(), UsernamePasswordAuthenticationFilter.class);
