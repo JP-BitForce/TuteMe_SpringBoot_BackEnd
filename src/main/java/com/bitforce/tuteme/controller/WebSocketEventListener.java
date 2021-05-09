@@ -1,4 +1,4 @@
-package com.bitforce.tuteme.configuration;
+package com.bitforce.tuteme.controller;
 
 import com.bitforce.tuteme.model.ChatMessage;
 import org.slf4j.Logger;
