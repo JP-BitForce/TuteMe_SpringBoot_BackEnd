@@ -7,6 +7,7 @@ import com.bitforce.tuteme.service.UserSkillService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.Set;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -18,7 +19,7 @@ public class UserSkillsController {
     private final UserSkillService userSkillService;
 
     @GetMapping()
-    public Set<Skill> getAllSkillsForUser(@RequestParam Long userId) {
+    public Map<String,Set<Skill>> getAllSkillsForUser(@RequestParam Long userId) {
         return userSkillService.getAllUserSkillsForUser(userId);
     }
 

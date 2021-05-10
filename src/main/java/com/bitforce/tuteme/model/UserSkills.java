@@ -16,6 +16,10 @@ public class UserSkills {
     @OneToOne
     private User user;
     @ManyToMany
-    private Set<Skill> skills;
+    private Set<Skill> SubjectSkills;
+    @ManyToMany
+    private Set<Skill> topSkills;
+    @ManyToMany
+    private Set<Skill> techSkills;
 
 }
