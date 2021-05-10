@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface CourseTypeRepository extends JpaRepository<CourseType, Long> {
     List<CourseType> findAllByTitleIn(List<String> type);
+
+    CourseType findByTitle(String title);
 }

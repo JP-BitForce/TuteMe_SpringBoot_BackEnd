@@ -2,6 +2,7 @@ package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.dto.CourseDTO;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
+import com.bitforce.tuteme.dto.ServiceRequest.CreateNewCourseRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetCourseByIdResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
@@ -37,8 +38,9 @@ public class CourseService {
     private final CourseTypeRepository courseTypeRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final UserRepository userRepository;
+    private final CourseDurationRepository courseDurationRepository;
 
-    public Course createCourse(MultipartFile file, Course course) {
+    public String createCourse(MultipartFile file, CreateNewCourseRequest request) throws EntityNotFoundException {
         String fileName = fileStorageService.storeFile(file);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -46,10 +48,44 @@ public class CourseService {
                 .path(fileName)
                 .toUriString();
 
-        Course course1 = new Course();
-        course.setImageUrl(fileDownloadUri);
-        BeanUtils.copyProperties(course, course1);
-        return courseRepository.save(course);
+        CourseCategory courseCategory = courseCategoryService.getCategoryByName(request.getCategory());
+        CourseType courseType = courseTypeRepository.findByTitle(request.getType());
+        List<CoursePriceCategory> coursePriceCategories = coursePriceCategoryRepository.findAll();
+        CoursePriceCategory coursePriceCategory = null;
+        if (!coursePriceCategories.isEmpty()) {
+            for (CoursePriceCategory category : coursePriceCategories) {
+                int minComparison = request.getPrice().compareTo(category.getPriceMin());
+                int maxComparison = request.getPrice().compareTo(category.getPriceMax());
+                if (minComparison >= 0 && maxComparison < 0) {
+                    coursePriceCategory = category;
+                }
+            }
+        }
+
+        Tutor tutor = tutorProfileService.getTutor(request.getTutorId());
+        CourseDuration duration = CourseDuration
+                .builder()
+                .year(request.getYear())
+                .month(request.getMonth())
+                .days(request.getDays())
+                .build();
+        CourseDuration courseDuration = courseDurationRepository.save(duration);
+
+        Course course = Course
+                .builder()
+                .name(request.getCourseName())
+                .description(request.getDescription())
+                .imageUrl(fileDownloadUri)
+                .rating((double) 5)
+                .price(request.getPrice())
+                .tutor(tutor)
+                .courseCategory(courseCategory)
+                .coursePriceCategory(coursePriceCategory)
+                .courseType(courseType)
+                .courseDuration(courseDuration)
+                .build();
+        courseRepository.save(course);
+        return "new course created successfully";
     }
 
     public ResponseEntity<Map<String, Object>> getAllCourses(int page, Long userId) {

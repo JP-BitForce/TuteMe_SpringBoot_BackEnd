@@ -130,6 +130,14 @@ public class TutorProfileService {
         return userAuthRepository.findByUserId(user.getId()).getEmail();
     }
 
+    public Tutor getTutor(Long id) throws EntityNotFoundException {
+        Optional<Tutor> tutorOptional = tutorRepository.findById(id);
+        if (!tutorOptional.isPresent()) {
+            throw new EntityNotFoundException("TUTOR_NOT_FOUND");
+        }
+        return tutorOptional.get();
+    }
+
     @SneakyThrows
     public byte[] getImageSource(String url) {
         if (url != null) {

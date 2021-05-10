@@ -1,8 +1,11 @@
 package com.bitforce.tuteme.controller;
 
+import com.bitforce.tuteme.dto.ApiResponse;
+import com.bitforce.tuteme.dto.ControllerRequest.CreateNewCourseControllerRequest;
 import com.bitforce.tuteme.dto.ControllerRequest.FilterCoursesControllerRequest;
 import com.bitforce.tuteme.dto.ControllerRequest.SearchCourseControllerRequest;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
+import com.bitforce.tuteme.dto.ServiceRequest.CreateNewCourseRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetCourseByIdResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
@@ -31,9 +34,28 @@ public class CourseController {
     private static final Logger log = LoggerFactory.getLogger(CourseController.class);
     private final CourseService courseService;
 
-    @PostMapping
-    public Course createCourse(@RequestParam MultipartFile file, @ModelAttribute Course course) {
-        return courseService.createCourse(file, course);
+    @PostMapping(value = "/createNew", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<?> createCourse(@RequestPart("course") CreateNewCourseControllerRequest request, @RequestPart("file") MultipartFile file) {
+        try {
+            CreateNewCourseRequest createNewCourseRequest = new CreateNewCourseRequest(
+                    request.getTutorId(),
+                    request.getFullName(),
+                    request.getEmail(),
+                    request.getCourseName(),
+                    request.getDescription(),
+                    request.getPrice(),
+                    request.getCategory(),
+                    request.getType(),
+                    request.getYear(),
+                    request.getMonth(),
+                    request.getDays()
+            );
+            String response = courseService.createCourse(file, createNewCourseRequest);
+            ApiResponse apiResponse = new ApiResponse(true, response);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
     @GetMapping("getAll")

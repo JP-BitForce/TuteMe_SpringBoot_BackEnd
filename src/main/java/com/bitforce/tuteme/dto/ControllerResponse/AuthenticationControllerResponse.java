@@ -16,4 +16,5 @@ public class AuthenticationControllerResponse {
     private String email;
     private Long profileId;
     private String role;
+    private byte[] imgSrc;
 }

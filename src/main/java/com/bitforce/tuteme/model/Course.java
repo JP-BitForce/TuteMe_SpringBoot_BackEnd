@@ -1,5 +1,6 @@
 package com.bitforce.tuteme.model;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Entity
 @Data
+@Builder
 @NoArgsConstructor
 public class Course {
     @Id
@@ -36,4 +38,7 @@ public class Course {
 
     @OneToMany
     private List<Schedule> schedules;
+
+    @OneToOne
+    private CourseDuration courseDuration;
 }
