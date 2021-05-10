@@ -21,8 +21,6 @@ public class Answer {
     @Lob
     private String content;
 
-    private LocalDateTime createdAt;
-
     private int votes;
 
     @OneToOne

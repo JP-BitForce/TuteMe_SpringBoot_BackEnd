@@ -22,7 +22,6 @@ public class Event {
 
     private LocalDateTime start;
 
-    private LocalDateTime end;
 
     private String backgroundColor;
 
