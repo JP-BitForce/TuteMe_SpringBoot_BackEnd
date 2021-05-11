@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
 public class CourseService {
 
     private final CourseRepository courseRepository;
@@ -39,6 +38,29 @@ public class CourseService {
     private final EnrollmentRepository enrollmentRepository;
     private final UserRepository userRepository;
     private final CourseDurationRepository courseDurationRepository;
+    private final ScheduleRepository scheduleRepository;
+
+    public CourseService(CourseRepository courseRepository,
+                         CourseCategoryService courseCategoryService,
+                         CourseLevelRespository courseLevelRespository,
+                         CoursePriceCategoryRepository coursePriceCategoryRepository,
+                         TutorProfileService tutorProfileService,
+                         CourseTypeRepository courseTypeRepository,
+                         EnrollmentRepository enrollmentRepository,
+                         UserRepository userRepository,
+                         CourseDurationRepository courseDurationRepository,
+                         ScheduleRepository scheduleRepository) {
+        this.courseRepository = courseRepository;
+        this.courseCategoryService = courseCategoryService;
+        this.courseLevelRespository = courseLevelRespository;
+        this.coursePriceCategoryRepository = coursePriceCategoryRepository;
+        this.tutorProfileService = tutorProfileService;
+        this.courseTypeRepository = courseTypeRepository;
+        this.enrollmentRepository = enrollmentRepository;
+        this.userRepository = userRepository;
+        this.courseDurationRepository = courseDurationRepository;
+        this.scheduleRepository = scheduleRepository;
+    }
 
     public String createCourse(MultipartFile file, CreateNewCourseRequest request) throws EntityNotFoundException {
         String fileName = fileStorageService.storeFile(file);
@@ -71,19 +93,34 @@ public class CourseService {
                 .build();
         CourseDuration courseDuration = courseDurationRepository.save(duration);
 
-        Course course = Course
-                .builder()
-                .name(request.getCourseName())
-                .description(request.getDescription())
-                .imageUrl(fileDownloadUri)
-                .rating((double) 5)
-                .price(request.getPrice())
-                .tutor(tutor)
-                .courseCategory(courseCategory)
-                .coursePriceCategory(coursePriceCategory)
-                .courseType(courseType)
-                .courseDuration(courseDuration)
-                .build();
+        List<Schedule> schedules = new ArrayList<>();
+        int i;
+        for (i = 0; i < request.getSchedules().size(); i++) {
+            Schedule newSchedule = request.getSchedules().get(i);
+            Schedule schedule = Schedule
+                    .builder()
+                    .day(newSchedule.getDay())
+                    .startTime(newSchedule.getStartTime())
+                    .endTime(newSchedule.getEndTime())
+                    .build();
+            Schedule persisted = scheduleRepository.save(schedule);
+            schedules.add(persisted);
+        }
+
+        Course course = new Course(
+                request.getCourseName(),
+                request.getDescription(),
+                fileDownloadUri,
+                (double) 5,
+                request.getYear() + " years" + " " + request.getMonth() + " months" + " " + request.getDays() + " days",
+                request.getPrice(),
+                tutor,
+                courseCategory,
+                coursePriceCategory,
+                courseType,
+                schedules,
+                courseDuration
+        );
         courseRepository.save(course);
         return "new course created successfully";
     }

@@ -48,7 +48,8 @@ public class CourseController {
                     request.getType(),
                     request.getYear(),
                     request.getMonth(),
-                    request.getDays()
+                    request.getDays(),
+                    request.getSchedules()
             );
             String response = courseService.createCourse(file, createNewCourseRequest);
             ApiResponse apiResponse = new ApiResponse(true, response);

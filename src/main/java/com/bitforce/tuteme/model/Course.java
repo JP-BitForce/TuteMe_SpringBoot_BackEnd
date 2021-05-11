@@ -1,6 +1,5 @@
 package com.bitforce.tuteme.model;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,7 +9,6 @@ import java.util.List;
 
 @Entity
 @Data
-@Builder
 @NoArgsConstructor
 public class Course {
     @Id
@@ -41,4 +39,31 @@ public class Course {
 
     @OneToOne
     private CourseDuration courseDuration;
+
+    public Course(String name,
+                  String description,
+                  String imageUrl,
+                  Double rating,
+                  String duration,
+                  BigDecimal price,
+                  Tutor tutor,
+                  CourseCategory courseCategory,
+                  CoursePriceCategory coursePriceCategory,
+                  CourseType courseType,
+                  List<Schedule> schedules,
+                  CourseDuration courseDuration
+    ) {
+        this.name = name;
+        this.description = description;
+        this.imageUrl = imageUrl;
+        this.rating = rating;
+        this.duration = duration;
+        this.price = price;
+        this.tutor = tutor;
+        this.courseCategory = courseCategory;
+        this.coursePriceCategory = coursePriceCategory;
+        this.courseType = courseType;
+        this.schedules = schedules;
+        this.courseDuration = courseDuration;
+    }
 }
