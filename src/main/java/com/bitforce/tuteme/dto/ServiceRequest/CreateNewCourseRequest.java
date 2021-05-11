@@ -13,8 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 public class CreateNewCourseRequest {
     private Long tutorId;
-    private String fullName;
-    private String email;
     private String courseName;
     private String description;
     private BigDecimal price;

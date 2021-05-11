@@ -4,10 +4,13 @@ import com.bitforce.tuteme.dto.ApiResponse;
 import com.bitforce.tuteme.dto.ControllerRequest.CreateNewCourseControllerRequest;
 import com.bitforce.tuteme.dto.ControllerRequest.FilterCoursesControllerRequest;
 import com.bitforce.tuteme.dto.ControllerRequest.SearchCourseControllerRequest;
+import com.bitforce.tuteme.dto.ControllerRequest.UpdateCourseControllerRequest;
+import com.bitforce.tuteme.dto.ControllerResponse.GetCourseByTutorControllerResponse;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
 import com.bitforce.tuteme.dto.ServiceRequest.CreateNewCourseRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetCourseByIdResponse;
+import com.bitforce.tuteme.dto.ServiceResponse.GetCourseByTutorResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
 import com.bitforce.tuteme.model.Course;
 import com.bitforce.tuteme.service.CourseService;
@@ -39,8 +42,6 @@ public class CourseController {
         try {
             CreateNewCourseRequest createNewCourseRequest = new CreateNewCourseRequest(
                     request.getTutorId(),
-                    request.getFullName(),
-                    request.getEmail(),
                     request.getCourseName(),
                     request.getDescription(),
                     request.getPrice(),
@@ -51,9 +52,8 @@ public class CourseController {
                     request.getDays(),
                     request.getSchedules()
             );
-            String response = courseService.createCourse(file, createNewCourseRequest);
-            ApiResponse apiResponse = new ApiResponse(true, response);
-            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+            GetCourseByTutorResponse response = courseService.createCourse(file, createNewCourseRequest);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
@@ -69,9 +69,52 @@ public class CourseController {
         return courseService.getCourse(courseId);
     }
 
-    @PutMapping("/{courseId}")
-    public Course updateCourse(@RequestBody Course course, @PathVariable Long courseId) {
-        return courseService.updateCourse(course, courseId);
+    @PostMapping(value = "/update_course", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<?> updateCourse(
+            @RequestPart("course") UpdateCourseControllerRequest request, @RequestPart("file") MultipartFile file
+    ) {
+        try {
+            UpdateCourseControllerRequest updateCourseControllerRequest = new UpdateCourseControllerRequest(
+                    request.getCourseId(),
+                    request.getTutorId(),
+                    request.getCourseName(),
+                    request.getDescription(),
+                    request.getPrice(),
+                    request.getCategory(),
+                    request.getType(),
+                    request.getYear(),
+                    request.getMonth(),
+                    request.getDays(),
+                    request.getSchedules()
+            );
+            GetCourseByTutorResponse response = courseService.updateCourse(updateCourseControllerRequest, file);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/update_course/no_form_data")
+    public ResponseEntity<?> updateCourseNoFormData(@RequestBody UpdateCourseControllerRequest request) {
+        try {
+            UpdateCourseControllerRequest updateCourseControllerRequest = new UpdateCourseControllerRequest(
+                    request.getCourseId(),
+                    request.getTutorId(),
+                    request.getCourseName(),
+                    request.getDescription(),
+                    request.getPrice(),
+                    request.getCategory(),
+                    request.getType(),
+                    request.getYear(),
+                    request.getMonth(),
+                    request.getDays(),
+                    request.getSchedules()
+            );
+            GetCourseByTutorResponse response = courseService.updateCourse(updateCourseControllerRequest, null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
     @DeleteMapping("/{courseId}")
@@ -145,6 +188,29 @@ public class CourseController {
             return courseService.getCourseById(id);
         } catch (Exception e) {
             log.error("Unable to get course by id: {}", id);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @GetMapping("/get_course_by_tutor/{id}")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public GetCourseByTutorControllerResponse getCourseByTutor(@PathVariable Long id) {
+        try {
+            GetCourseByTutorResponse response = courseService.getCourseByTutor(id);
+            return new GetCourseByTutorControllerResponse(
+                    response.getId(),
+                    response.getTitle(),
+                    response.getDescription(),
+                    response.getCourseImg(),
+                    response.getPrice(),
+                    response.getCourseCategory(),
+                    response.getCourseType(),
+                    response.getSchedules(),
+                    response.getCourseDuration()
+            );
+        } catch (Exception e) {
+            log.error("Unable to get course by tutor id: {}", id);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }

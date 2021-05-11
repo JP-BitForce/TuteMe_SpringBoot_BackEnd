@@ -11,7 +11,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateNewCourseControllerRequest {
+public class UpdateCourseControllerRequest {
+    private Long courseId;
     private Long tutorId;
     private String courseName;
     private String description;

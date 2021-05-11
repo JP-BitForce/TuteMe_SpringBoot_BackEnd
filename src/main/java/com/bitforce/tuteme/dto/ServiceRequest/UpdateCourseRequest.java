@@ -1,4 +1,4 @@
-package com.bitforce.tuteme.dto.ControllerRequest;
+package com.bitforce.tuteme.dto.ServiceRequest;
 
 import com.bitforce.tuteme.model.Schedule;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateNewCourseControllerRequest {
+public class UpdateCourseRequest {
+    private Long courseId;
     private Long tutorId;
     private String courseName;
     private String description;
