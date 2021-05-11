@@ -1,15 +1,16 @@
 package com.bitforce.tuteme.service;
 
+import com.bitforce.tuteme.dto.ControllerRequest.UpdateCourseControllerRequest;
 import com.bitforce.tuteme.dto.CourseDTO;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
 import com.bitforce.tuteme.dto.ServiceRequest.CreateNewCourseRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetCourseByIdResponse;
+import com.bitforce.tuteme.dto.ServiceResponse.GetCourseByTutorResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.*;
 import com.bitforce.tuteme.repository.*;
-import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,11 +64,11 @@ public class CourseService {
         this.scheduleRepository = scheduleRepository;
     }
 
-    public String createCourse(MultipartFile file, CreateNewCourseRequest request) throws EntityNotFoundException {
+    public GetCourseByTutorResponse createCourse(MultipartFile file, CreateNewCourseRequest request) throws EntityNotFoundException {
         String fileName = fileStorageService.storeFile(file);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/api/courses/uploads/courses/")
+                .path("/api/courses/uploads/Courses/")
                 .path(fileName)
                 .toUriString();
 
@@ -93,19 +95,7 @@ public class CourseService {
                 .build();
         CourseDuration courseDuration = courseDurationRepository.save(duration);
 
-        List<Schedule> schedules = new ArrayList<>();
-        int i;
-        for (i = 0; i < request.getSchedules().size(); i++) {
-            Schedule newSchedule = request.getSchedules().get(i);
-            Schedule schedule = Schedule
-                    .builder()
-                    .day(newSchedule.getDay())
-                    .startTime(newSchedule.getStartTime())
-                    .endTime(newSchedule.getEndTime())
-                    .build();
-            Schedule persisted = scheduleRepository.save(schedule);
-            schedules.add(persisted);
-        }
+        List<Schedule> schedules = saveAndGetSchedules(request.getSchedules());
 
         Course course = new Course(
                 request.getCourseName(),
@@ -121,8 +111,8 @@ public class CourseService {
                 schedules,
                 courseDuration
         );
-        courseRepository.save(course);
-        return "new course created successfully";
+        Course persisted = courseRepository.save(course);
+        return getCourseByTutorResponse(persisted);
     }
 
     public ResponseEntity<Map<String, Object>> getAllCourses(int page, Long userId) {
@@ -160,11 +150,43 @@ public class CourseService {
         return courseRepository.findById(courseId);
     }
 
-    public Course updateCourse(Course course, Long courseId) {
-        Course course1 = courseRepository.findById(courseId).get();
-        course.setImageUrl(course1.getImageUrl());
-        BeanUtils.copyProperties(course, course1);
-        return course;
+    public GetCourseByTutorResponse updateCourse(UpdateCourseControllerRequest request, MultipartFile file) throws EntityNotFoundException {
+        Optional<Course> courseOptional = courseRepository.findById(request.getCourseId());
+        if (!courseOptional.isPresent()) {
+            throw new EntityNotFoundException("COURSE_NOT_FOUND");
+        }
+        Course course = courseOptional.get();
+
+        if (file != null) {
+            String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/api/courses/uploads/Courses/")
+                    .path(fileStorageService.storeFile(file))
+                    .toUriString();
+            course.setImageUrl(fileDownloadUri);
+        }
+
+        List<Schedule> schedules = saveAndGetSchedules(request.getSchedules());
+        CourseCategory courseCategory = getCourseCategoryByName(request.getCategory());
+        CourseType courseType = getCourseTypeByName(request.getType());
+        CoursePriceCategory coursePriceCategory = getCoursePriceCategory(request.getPrice());
+
+        CourseDuration duration = course.getCourseDuration();
+        duration.setYear(request.getYear());
+        duration.setMonth(request.getMonth());
+        duration.setDays(request.getDays());
+        CourseDuration courseDuration = courseDurationRepository.save(duration);
+
+        course.setName(request.getCourseName());
+        course.setDescription(request.getDescription());
+        course.setPrice(request.getPrice());
+        course.setCourseCategory(courseCategory);
+        course.setCourseType(courseType);
+        course.setCoursePriceCategory(coursePriceCategory);
+        course.setSchedules(schedules);
+        course.setDuration(request.getYear() + " years" + " " + request.getMonth() + " months" + " " + request.getDays() + " days");
+        course.setCourseDuration(courseDuration);
+        courseRepository.save(course);
+        return getCourseByTutorResponse(course);
     }
 
     public String deleteCourse(Long courseId) {
@@ -280,6 +302,26 @@ public class CourseService {
         }
     }
 
+    public GetCourseByTutorResponse getCourseByTutor(Long tutorId) throws EntityNotFoundException {
+        Tutor tutor = tutorProfileService.getTutor(tutorId);
+        Course course = courseRepository.findByTutor(tutor);
+        return getCourseByTutorResponse(course);
+    }
+
+    private GetCourseByTutorResponse getCourseByTutorResponse(Course course) {
+        return new GetCourseByTutorResponse(
+                course.getId(),
+                course.getName(),
+                course.getDescription(),
+                getCourseImage(course.getImageUrl()),
+                course.getPrice(),
+                course.getCourseCategory(),
+                course.getCourseType(),
+                course.getSchedules(),
+                course.getCourseDuration()
+        );
+    }
+
     private boolean isCurrentUserEnrolled(Long userId, Course course) throws EntityNotFoundException {
         if (!userRepository.findById(userId).isPresent()) {
             throw new EntityNotFoundException("USER_NOT_FOUND");
@@ -309,6 +351,46 @@ public class CourseService {
 
     public byte[] getImageByte(String filename) throws IOException {
         return fileStorageService.convert(filename);
+    }
+
+    private List<Schedule> saveAndGetSchedules(List<Schedule> request) {
+        List<Schedule> schedules = new ArrayList<>();
+        int i;
+        for (i = 0; i < request.size(); i++) {
+            Schedule newSchedule = request.get(i);
+            Schedule schedule = Schedule
+                    .builder()
+                    .day(newSchedule.getDay())
+                    .startTime(newSchedule.getStartTime())
+                    .endTime(newSchedule.getEndTime())
+                    .build();
+            Schedule persisted = scheduleRepository.save(schedule);
+            schedules.add(persisted);
+        }
+        return schedules;
+    }
+
+    public CourseCategory getCourseCategoryByName(String name) {
+        return courseCategoryService.getCategoryByName(name);
+    }
+
+    public CourseType getCourseTypeByName(String name) {
+        return courseTypeRepository.findByTitle(name);
+    }
+
+    public CoursePriceCategory getCoursePriceCategory(BigDecimal price) {
+        List<CoursePriceCategory> coursePriceCategories = coursePriceCategoryRepository.findAll();
+        CoursePriceCategory coursePriceCategory = null;
+        if (!coursePriceCategories.isEmpty()) {
+            for (CoursePriceCategory category : coursePriceCategories) {
+                int minComparison = price.compareTo(category.getPriceMin());
+                int maxComparison = price.compareTo(category.getPriceMax());
+                if (minComparison >= 0 && maxComparison < 0) {
+                    coursePriceCategory = category;
+                }
+            }
+        }
+        return coursePriceCategory;
     }
 
 }
