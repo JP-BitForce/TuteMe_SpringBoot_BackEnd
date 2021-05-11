@@ -2,6 +2,7 @@ package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.dto.CourseDTO;
 import com.bitforce.tuteme.dto.CourseTutorDTO;
+import com.bitforce.tuteme.dto.ServiceRequest.CreateNewCourseRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetCourseByIdResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
@@ -25,7 +26,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
 public class CourseService {
 
     private final CourseRepository courseRepository;
@@ -37,8 +37,32 @@ public class CourseService {
     private final CourseTypeRepository courseTypeRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final UserRepository userRepository;
+    private final CourseDurationRepository courseDurationRepository;
+    private final ScheduleRepository scheduleRepository;
 
-    public Course createCourse(MultipartFile file, Course course) {
+    public CourseService(CourseRepository courseRepository,
+                         CourseCategoryService courseCategoryService,
+                         CourseLevelRespository courseLevelRespository,
+                         CoursePriceCategoryRepository coursePriceCategoryRepository,
+                         TutorProfileService tutorProfileService,
+                         CourseTypeRepository courseTypeRepository,
+                         EnrollmentRepository enrollmentRepository,
+                         UserRepository userRepository,
+                         CourseDurationRepository courseDurationRepository,
+                         ScheduleRepository scheduleRepository) {
+        this.courseRepository = courseRepository;
+        this.courseCategoryService = courseCategoryService;
+        this.courseLevelRespository = courseLevelRespository;
+        this.coursePriceCategoryRepository = coursePriceCategoryRepository;
+        this.tutorProfileService = tutorProfileService;
+        this.courseTypeRepository = courseTypeRepository;
+        this.enrollmentRepository = enrollmentRepository;
+        this.userRepository = userRepository;
+        this.courseDurationRepository = courseDurationRepository;
+        this.scheduleRepository = scheduleRepository;
+    }
+
+    public String createCourse(MultipartFile file, CreateNewCourseRequest request) throws EntityNotFoundException {
         String fileName = fileStorageService.storeFile(file);
 
         String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -46,10 +70,59 @@ public class CourseService {
                 .path(fileName)
                 .toUriString();
 
-        Course course1 = new Course();
-        course.setImageUrl(fileDownloadUri);
-        BeanUtils.copyProperties(course, course1);
-        return courseRepository.save(course);
+        CourseCategory courseCategory = courseCategoryService.getCategoryByName(request.getCategory());
+        CourseType courseType = courseTypeRepository.findByTitle(request.getType());
+        List<CoursePriceCategory> coursePriceCategories = coursePriceCategoryRepository.findAll();
+        CoursePriceCategory coursePriceCategory = null;
+        if (!coursePriceCategories.isEmpty()) {
+            for (CoursePriceCategory category : coursePriceCategories) {
+                int minComparison = request.getPrice().compareTo(category.getPriceMin());
+                int maxComparison = request.getPrice().compareTo(category.getPriceMax());
+                if (minComparison >= 0 && maxComparison < 0) {
+                    coursePriceCategory = category;
+                }
+            }
+        }
+
+        Tutor tutor = tutorProfileService.getTutor(request.getTutorId());
+        CourseDuration duration = CourseDuration
+                .builder()
+                .year(request.getYear())
+                .month(request.getMonth())
+                .days(request.getDays())
+                .build();
+        CourseDuration courseDuration = courseDurationRepository.save(duration);
+
+        List<Schedule> schedules = new ArrayList<>();
+        int i;
+        for (i = 0; i < request.getSchedules().size(); i++) {
+            Schedule newSchedule = request.getSchedules().get(i);
+            Schedule schedule = Schedule
+                    .builder()
+                    .day(newSchedule.getDay())
+                    .startTime(newSchedule.getStartTime())
+                    .endTime(newSchedule.getEndTime())
+                    .build();
+            Schedule persisted = scheduleRepository.save(schedule);
+            schedules.add(persisted);
+        }
+
+        Course course = new Course(
+                request.getCourseName(),
+                request.getDescription(),
+                fileDownloadUri,
+                (double) 5,
+                request.getYear() + " years" + " " + request.getMonth() + " months" + " " + request.getDays() + " days",
+                request.getPrice(),
+                tutor,
+                courseCategory,
+                coursePriceCategory,
+                courseType,
+                schedules,
+                courseDuration
+        );
+        courseRepository.save(course);
+        return "new course created successfully";
     }
 
     public ResponseEntity<Map<String, Object>> getAllCourses(int page, Long userId) {

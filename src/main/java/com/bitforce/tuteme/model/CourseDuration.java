@@ -15,14 +15,14 @@ import javax.persistence.Id;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Schedule {
+public class CourseDuration {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    private String day;
+    private int year;
 
-    private String startTime;
+    private int month;
 
-    private String endTime;
+    private int days;
 }

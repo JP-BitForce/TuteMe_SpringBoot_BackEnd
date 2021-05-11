@@ -15,7 +15,11 @@ public class UserSkills {
     private Long id;
     @OneToOne
     private User user;
-    @ManyToMany
-    private Set<Skill> skills;
+    @ElementCollection
+    private Set<String> SubjectSkills;
+    @ElementCollection
+    private Set<String> topSkills;
+    @ElementCollection
+    private Set<String> techSkills;
 
 }
