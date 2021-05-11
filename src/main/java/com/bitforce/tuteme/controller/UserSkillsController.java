@@ -1,7 +1,6 @@
 package com.bitforce.tuteme.controller;
 
 import com.bitforce.tuteme.dto.UserSkillsDTO;
-import com.bitforce.tuteme.model.Skill;
 import com.bitforce.tuteme.model.UserSkills;
 import com.bitforce.tuteme.service.UserSkillService;
 import lombok.AllArgsConstructor;
@@ -19,7 +18,7 @@ public class UserSkillsController {
     private final UserSkillService userSkillService;
 
     @GetMapping()
-    public Map<String,Set<Skill>> getAllSkillsForUser(@RequestParam Long userId) {
+    public Map<String, Set<String>> getAllSkillsForUser(@RequestParam Long userId) {
         return userSkillService.getAllUserSkillsForUser(userId);
     }
 

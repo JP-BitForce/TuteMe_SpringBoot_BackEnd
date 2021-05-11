@@ -11,7 +11,7 @@ import java.util.Set;
 @NoArgsConstructor
 public class UserSkillsDTO {
     private Long userId;
-    private Set<Long> subjectSkills;
-    private Set<Long> topSkills;
-    private Set<Long> techSkills;
+    private Set<String> subjectSkills;
+    private Set<String> topSkills;
+    private Set<String> techSkills;
 }
