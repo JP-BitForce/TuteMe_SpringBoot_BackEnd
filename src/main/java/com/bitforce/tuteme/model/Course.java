@@ -36,4 +36,34 @@ public class Course {
 
     @OneToMany
     private List<Schedule> schedules;
+
+    @OneToOne
+    private CourseDuration courseDuration;
+
+    public Course(String name,
+                  String description,
+                  String imageUrl,
+                  Double rating,
+                  String duration,
+                  BigDecimal price,
+                  Tutor tutor,
+                  CourseCategory courseCategory,
+                  CoursePriceCategory coursePriceCategory,
+                  CourseType courseType,
+                  List<Schedule> schedules,
+                  CourseDuration courseDuration
+    ) {
+        this.name = name;
+        this.description = description;
+        this.imageUrl = imageUrl;
+        this.rating = rating;
+        this.duration = duration;
+        this.price = price;
+        this.tutor = tutor;
+        this.courseCategory = courseCategory;
+        this.coursePriceCategory = coursePriceCategory;
+        this.courseType = courseType;
+        this.schedules = schedules;
+        this.courseDuration = courseDuration;
+    }
 }

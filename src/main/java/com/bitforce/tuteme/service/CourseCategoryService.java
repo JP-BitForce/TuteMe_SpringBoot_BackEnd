@@ -96,4 +96,8 @@ public class CourseCategoryService {
         }
         return null;
     }
+
+    public CourseCategory getCategoryByName(String category) {
+        return courseCategoryRepository.findByCategory(category);
+    }
 }
