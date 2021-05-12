@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GetBlogsControllerRequest {
-    private String userId;
+    private Long profileId;
     private int page;
+    private String role;
 }
