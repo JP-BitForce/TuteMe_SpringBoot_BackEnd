@@ -146,6 +146,36 @@ public class CourseService {
         }
     }
 
+
+    public ResponseEntity<Map<String, Object>> getAllCoursesForLandingPage(int page) {
+        try {
+            Pageable paging = PageRequest.of(page, 10);
+            Page<Course> coursePage = courseRepository.findAll(paging);
+            List<Course> courses = coursePage.getContent();
+
+            List<CourseDTO> courseDTOS = new ArrayList<>();
+            for (Course course : courses) {
+                CourseDTO courseDTO = new CourseDTO();
+                BeanUtils.copyProperties(course, courseDTO);
+                courseDTO.setCategoryId(course.getCourseCategory().getId());
+                courseDTO.setCategoryName(course.getCourseCategory().getCategory());
+                courseDTO.setTutorId(course.getTutor().getId());
+                courseDTO.setTutorName(course.getTutor().getUser().getFirstName() + " " + course.getTutor().getUser().getLastName());
+                courseDTO.setImageUrl(getCourseImage(course.getImageUrl()));
+                courseDTOS.add(courseDTO);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", courseDTOS);
+            response.put("current", coursePage.getNumber());
+            response.put("total", coursePage.getTotalPages());
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public Optional<Course> getCourse(Long courseId) {
         return courseRepository.findById(courseId);
     }
@@ -343,7 +373,7 @@ public class CourseService {
     @SneakyThrows
     private byte[] getCourseImage(String url) {
         if (url != null) {
-            String[] filename = url.trim().split("http://localhost:8080/api/courses/uploads/Courses/");
+            String[] filename = url.trim().split("http://localhost:8080/api/courses/uploads/courses/");
             return getImageByte(filename[1]);
         }
         return null;
