@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
 import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -52,7 +53,7 @@ public class BlogController {
     }
 
     @GetMapping("/{blogId}")
-    public Blog getBlog(@PathVariable Long blogId){
+    public Blog getBlog(@PathVariable Long blogId) {
         return blogService.getBlog(blogId);
     }
 
@@ -60,8 +61,9 @@ public class BlogController {
     public ResponseEntity<?> getAllBlogsForUser(@RequestBody GetBlogsControllerRequest request) {
         try {
             PageableCoreBlogs pageableCoreBlogs = blogService.getAllBlogsForUser(
-                    Long.parseLong(request.getUserId()),
-                    request.getPage()
+                    request.getProfileId(),
+                    request.getPage(),
+                    request.getRole()
             );
             GetBlogsControllerResponse response = getResponse(pageableCoreBlogs);
             return new ResponseEntity<>(response, HttpStatus.OK);
@@ -71,22 +73,22 @@ public class BlogController {
     }
 
     @PutMapping("/{blogId}")
-    public Blog updateBlog(@RequestBody Blog blog, @PathVariable Long blogId){
-        return blogService.updateBlog(blog,blogId);
+    public Blog updateBlog(@RequestBody Blog blog, @PathVariable Long blogId) {
+        return blogService.updateBlog(blog, blogId);
     }
 
     @DeleteMapping("/{blogId}")
-    public String deleteBlog(@PathVariable Long blogId){
+    public String deleteBlog(@PathVariable Long blogId) {
         return blogService.deleteBlog(blogId);
     }
 
     @PutMapping("/like/{blogId}")
-    public Blog doLike(@PathVariable Long blogId){
+    public Blog doLike(@PathVariable Long blogId) {
         return blogService.doLike(blogId);
     }
 
     @PutMapping("/unlike/{blogId}")
-    public Blog doUnLike(@PathVariable Long blogId){
+    public Blog doUnLike(@PathVariable Long blogId) {
         return blogService.doUnLike(blogId);
     }
 
