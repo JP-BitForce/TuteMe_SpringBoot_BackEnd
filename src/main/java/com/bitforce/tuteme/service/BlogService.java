@@ -68,7 +68,16 @@ public class BlogService {
         return blogRepository.findById(blogId).get();
     }
 
-    public PageableCoreBlogs getAllBlogsForUser(Long userId,int page) {
+    public PageableCoreBlogs getAllBlogsForUser(Long profileId, int page, String role) throws EntityNotFoundException {
+        Long userId = null;
+        if (role.equals("ROLE_STUDENT")) {
+            User user = studentProfileService.getUser(profileId);
+            userId = user.getId();
+        }
+        if (role.equals("ROLE_TUTOR")) {
+            User user = tutorProfileService.getTutor(profileId).getUser();
+            userId = user.getId();
+        }
         Page<Blog> blogPage = blogRepository.findAllByUserId(
                 userId,
                 PageRequest.of(page, 10)
@@ -83,7 +92,7 @@ public class BlogService {
     }
 
     public Blog updateBlog(Blog blog, Long blogId) {
-        Blog blog1 =blogRepository.findById(blogId).get();
+        Blog blog1 = blogRepository.findById(blogId).get();
         blog1.setTitle(blog.getTitle());
         blog1.setContent(blog.getContent());
         blog1.setDate(LocalDateTime.now());
@@ -97,19 +106,19 @@ public class BlogService {
 
     public Blog doLike(Long blogId) {
         Blog blog = blogRepository.findById(blogId).get();
-        blog.setLikes(blog.getLikes()+1);
+        blog.setLikes(blog.getLikes() + 1);
         return blogRepository.save(blog);
     }
 
     public Blog doUnLike(Long blogId) {
         Blog blog = blogRepository.findById(blogId).get();
-        blog.setLikes(blog.getLikes()-1);
+        blog.setLikes(blog.getLikes() - 1);
         return blogRepository.save(blog);
     }
 
     @SneakyThrows
-    public byte[] getBlogImageByte(String url){
-        if(url != null) {
+    public byte[] getBlogImageByte(String url) {
+        if (url != null) {
             String[] filename = url.trim().split("http://localhost:8080/api/blog/uploads/Blogs/");
             return fileStorageService.convert(filename[1]);
         } else {
@@ -142,15 +151,15 @@ public class BlogService {
 
     public Blog convertToCoreEntity(Blog blog) {
         return new Blog(
-          blog.getId(),
-          blog.getTitle(),
-          blog.getContent(),
-          blog.getLikes(),
-          blog.getDate(),
-          blog.getDescription(),
-          blog.getCoverImgUrl(),
-          blog.getComments(),
-          blog.getUser()
+                blog.getId(),
+                blog.getTitle(),
+                blog.getContent(),
+                blog.getLikes(),
+                blog.getDate(),
+                blog.getDescription(),
+                blog.getCoverImgUrl(),
+                blog.getComments(),
+                blog.getUser()
         );
     }
 }

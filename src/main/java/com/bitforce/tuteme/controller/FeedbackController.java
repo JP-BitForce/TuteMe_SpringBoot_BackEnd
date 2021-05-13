@@ -26,7 +26,6 @@ public class FeedbackController {
     @PostMapping("/add_system_Feedback")
     public SystemFeedback createSystemFeedback(@RequestBody AddSystemFeedbackControllerRequest request) {
         try {
-
             AddSystemFeedbackRequest addSystemFeedbackRequest = new AddSystemFeedbackRequest(
                     request.getUserId(),
                     request.getProfileId(),
@@ -35,7 +34,6 @@ public class FeedbackController {
                     request.getRating(),
                     request.isServiceFind()
             );
-
             return systemFeedbackService.createFeedback(addSystemFeedbackRequest);
         } catch (Exception e) {
             log.error("Failed to add system feedback", e);

@@ -1,7 +1,10 @@
 package com.bitforce.tuteme.controller;
 
 import com.bitforce.tuteme.dto.ControllerRequest.FilterTutorByCategoryControllerRequest;
+import com.bitforce.tuteme.dto.ControllerRequest.UpdateTutorProfileControllerRequest;
+import com.bitforce.tuteme.dto.ServiceRequest.UpdateTutorProfileRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetTutorsResponse;
+import com.bitforce.tuteme.dto.ServiceResponse.TutorResponse;
 import com.bitforce.tuteme.dto.TutorProfileDTO;
 import com.bitforce.tuteme.model.User;
 import com.bitforce.tuteme.service.TutorProfileService;
@@ -25,22 +28,36 @@ public class TutorProfileController {
     private static final Logger log = LoggerFactory.getLogger(TutorProfileController.class);
     private final TutorProfileService tutorProfileService;
 
-    @PutMapping("/{userId}")
-    public TutorProfileDTO updateTutorProfile(@RequestBody TutorProfileDTO tutorProfileDTO, @PathVariable Long userId) {
+    @PutMapping("update_profile")
+    public TutorResponse updateTutorProfile(@RequestBody UpdateTutorProfileControllerRequest request) {
         try {
-            return tutorProfileService.updateTutorProfile(tutorProfileDTO, userId);
+            UpdateTutorProfileRequest updateTutorProfileRequest = new UpdateTutorProfileRequest(
+                    request.getFirstName(),
+                    request.getLastName(),
+                    request.getEmail(),
+                    request.getGender(),
+                    request.getCity(),
+                    request.getDistrict(),
+                    request.getBio(),
+                    request.getUserId(),
+                    request.getFacebook(),
+                    request.getTwitter(),
+                    request.getInstagram(),
+                    request.getLinkedIn()
+            );
+            return tutorProfileService.updateTutorProfile(updateTutorProfileRequest);
         } catch (Exception e) {
             log.error("unable to update tutor profile");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 
-    @GetMapping("/{userId}")
-    public TutorProfileDTO getTutorProfile(@PathVariable Long userId) {
+    @GetMapping("/get_tutor_profile/{tutorId}")
+    public TutorResponse getTutorProfile(@PathVariable Long tutorId) {
         try {
-            return tutorProfileService.getTutorProfile(userId);
+            return tutorProfileService.getTutorProfile(tutorId);
         } catch (Exception e) {
-            log.error("unable to get tutor profile of userId:{}", userId);
+            log.error("unable to get tutor profile of tutorId:{}", tutorId);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
@@ -57,7 +74,7 @@ public class TutorProfileController {
     }
 
 
-    @PutMapping("upload/{userId}")
+    @RequestMapping(value = "upload/{userId}", headers = "Content-Type= multipart/form-data", method = RequestMethod.POST)
     public User updateTutorProfilePicture(@RequestParam MultipartFile file, @PathVariable Long userId) {
         try {
             return tutorProfileService.updateTutorProfilePicture(file, userId);
