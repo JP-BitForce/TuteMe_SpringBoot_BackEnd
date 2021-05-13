@@ -26,4 +26,6 @@ public class Resource {
 
     @OneToOne
     private Course course;
+
+    private String url;
 }
