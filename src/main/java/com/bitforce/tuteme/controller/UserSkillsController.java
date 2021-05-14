@@ -17,12 +17,12 @@ public class UserSkillsController {
 
     private final UserSkillService userSkillService;
 
-    @GetMapping()
+    @GetMapping("/get_skills")
     public Map<String, Set<String>> getAllSkillsForUser(@RequestParam Long userId) {
         return userSkillService.getAllUserSkillsForUser(userId);
     }
 
-    @PutMapping
+    @PutMapping("/update_skills")
     public UserSkills createSkill(@RequestBody UserSkillsDTO newSkills) {
         return userSkillService.createUserSkills(newSkills);
     }
