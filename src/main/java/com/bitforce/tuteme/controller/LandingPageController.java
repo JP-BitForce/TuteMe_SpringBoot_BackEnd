@@ -3,7 +3,9 @@ package com.bitforce.tuteme.controller;
 import com.bitforce.tuteme.dto.ApiResponse;
 import com.bitforce.tuteme.dto.ControllerRequest.SendSystemMessageControllerRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetCoursesForPublicResponse;
+import com.bitforce.tuteme.dto.ServiceResponse.GetLandingPageContentsResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetTutorsResponse;
+import com.bitforce.tuteme.exception.AlreadyExistException;
 import com.bitforce.tuteme.service.CourseService;
 import com.bitforce.tuteme.service.LandingPageService;
 import com.bitforce.tuteme.service.SystemFeedbackService;
@@ -41,7 +43,13 @@ public class LandingPageController {
 
     @GetMapping("/feedback/{page}")
     public ResponseEntity<Map<String, Object>> getAllFeedbacks(@PathVariable int page) {
-        return systemFeedbackService.getAllFeedbacks(page);
+        try {
+            Map<String, Object> response = systemFeedbackService.getAllFeedbacks(page);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to get feedbacks");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
     @GetMapping(value = "/get_courses/{page}")
@@ -78,7 +86,7 @@ public class LandingPageController {
             GetTutorsResponse response = tutorProfileService.getTutorProfiles(page);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Unable to get courses for public");
+            log.error("Unable to get tutors for public");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
@@ -91,7 +99,7 @@ public class LandingPageController {
             GetTutorsResponse response = tutorProfileService.searchTutorByValue(value, page);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Unable to search course for public");
+            log.error("Unable to search tutor for public");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
@@ -109,8 +117,38 @@ public class LandingPageController {
             ApiResponse apiResponse = new ApiResponse(true, response);
             return new ResponseEntity<>(apiResponse, HttpStatus.OK);
         } catch (Exception e) {
-            log.error("Unable to search course for public");
+            log.error("Unable to send message to system");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @GetMapping(value = "/get_landing_page_contents")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> getLandingContents() {
+        try {
+            GetLandingPageContentsResponse response = landingPageService.getLandingPageContents();
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Unable to get contents for landing page");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/subscribe_to_newsletter/{email}")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> subscribe(@PathVariable String email) {
+        try {
+            String response = landingPageService.subscribe(email);
+            ApiResponse apiResponse = new ApiResponse(true, response);
+            return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+        } catch (AlreadyExistException e) {
+            log.error("Unable to subscribe to system, already exist");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Already Subscription is made for this email");
+        } catch (Exception e) {
+            log.error("Unable to subscribe to system");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "server error, please try again later");
         }
     }
 }
