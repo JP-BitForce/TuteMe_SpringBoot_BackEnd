@@ -5,6 +5,7 @@ import com.bitforce.tuteme.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,4 +17,7 @@ public interface TutorRepository extends JpaRepository<Tutor, Long> {
     List<Tutor> findAllByUserIn(List<User> users);
 
     Page<Tutor> findAllByFullNameContaining(String fullName, Pageable pageable);
+
+    @Query("select count(id) from Tutor")
+    int numberOfCourses();
 }
