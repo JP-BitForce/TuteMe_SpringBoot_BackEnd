@@ -7,6 +7,7 @@ import com.bitforce.tuteme.dto.ServiceRequest.CreateNewCourseRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.FilterCoursesRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetCourseByIdResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetCourseByTutorResponse;
+import com.bitforce.tuteme.dto.ServiceResponse.GetCoursesForPublicResponse;
 import com.bitforce.tuteme.dto.ServiceResponse.GetFilterCategoriesResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.*;
@@ -306,6 +307,37 @@ public class CourseService {
         Tutor tutor = tutorProfileService.getTutor(tutorId);
         Course course = courseRepository.findByTutor(tutor);
         return getCourseByTutorResponse(course);
+    }
+
+    public GetCoursesForPublicResponse getCoursesForPublic(int page) {
+        Pageable paging = PageRequest.of(page, 10);
+        Page<Course> coursePage = courseRepository.findAll(paging);
+        return getCoursesForPublicResponse(coursePage);
+    }
+
+    public GetCoursesForPublicResponse searchCoursesForPublic(int page, String value) {
+        Pageable paging = PageRequest.of(page, 10);
+        Page<Course> coursePage = courseRepository.findAllByNameContaining(value, paging);
+        return getCoursesForPublicResponse(coursePage);
+    }
+
+    private GetCoursesForPublicResponse getCoursesForPublicResponse(Page<Course> coursePage) {
+        return new GetCoursesForPublicResponse(
+                coursePage.getContent().stream().map(course -> new GetCoursesForPublicResponse.Course(
+                        course.getId(),
+                        course.getName(),
+                        course.getDescription(),
+                        getCourseImage(course.getImageUrl()),
+                        course.getPrice(),
+                        course.getCourseCategory(),
+                        course.getCourseType(),
+                        course.getCourseDuration(),
+                        getUserFullName(course.getTutor().getUser()),
+                        course.getRating()
+                )).collect(Collectors.toList()),
+                coursePage.getTotalPages(),
+                coursePage.getNumber()
+        );
     }
 
     private GetCourseByTutorResponse getCourseByTutorResponse(Course course) {
