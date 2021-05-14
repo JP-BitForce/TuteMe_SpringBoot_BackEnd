@@ -28,17 +28,17 @@ public class UserSkillService {
         Set<String> subjectSkills = new HashSet<>();
         Set<String> topSkills = new HashSet<>();
         Set<String> techSkills = new HashSet<>();
-
-        if (userSkills.getSubjectSkills() != null) {
-            subjectSkills = userSkills.getSubjectSkills();
+        if (userSkills != null) {
+            if (userSkills.getSubjectSkills() != null) {
+                subjectSkills = userSkills.getSubjectSkills();
+            }
+            if (userSkills.getTopSkills() != null) {
+                topSkills = userSkills.getTopSkills();
+            }
+            if (userSkills.getTechSkills() != null) {
+                techSkills = userSkills.getTechSkills();
+            }
         }
-        if (userSkills.getTopSkills() != null) {
-            topSkills = userSkills.getTopSkills();
-        }
-        if (userSkills.getTechSkills() != null) {
-            techSkills = userSkills.getTechSkills();
-        }
-
         Map<String, Set<String>> skills = new HashMap();
         skills.put("subjectSkills", subjectSkills);
         skills.put("topSkills", topSkills);
