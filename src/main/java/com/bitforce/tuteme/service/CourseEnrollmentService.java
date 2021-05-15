@@ -94,7 +94,8 @@ public class CourseEnrollmentService {
                         getCourseImage(enrollment.getCourse().getImageUrl()),
                         enrollment.getCourse().getRating(),
                         enrollment.getCourse().getSchedules(),
-                        resourceRepository.findAllByCourseOrderByUploadedDesc(enrollment.getCourse())
+                        resourceRepository.findAllByCourseOrderByUploadedDesc(enrollment.getCourse()),
+                        enrollment.getCourse().getTutor().getId()
                 )).collect(Collectors.toList()),
                 enrollments.getTotalPages(),
                 enrollments.getNumber()

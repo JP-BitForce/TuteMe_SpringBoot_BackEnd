@@ -32,5 +32,6 @@ public class GetEnrolledCoursesResponse {
         private double rating;
         private List<Schedule> schedules;
         private List<Resource> resources;
+        private Long tutorId;
     }
 }
