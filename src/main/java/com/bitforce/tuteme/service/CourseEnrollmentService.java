@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,6 +59,30 @@ public class CourseEnrollmentService {
     public GetEnrolledCoursesResponse getCourses(Long userId, int page) throws EntityNotFoundException {
         User user = getUser(userId);
         Page<Enrollment> enrollments = enrollmentRepository.findByUser(user, PageRequest.of(page, 10));
+        return getEnrolledCoursesResponse(enrollments);
+    }
+
+    public GetEnrolledCoursesResponse filter(List<String> courseCategories, int page, Long userId) throws EntityNotFoundException {
+        User user = getUser(userId);
+        Page<Enrollment> enrollments = enrollmentRepository.filterEnrolledCourses(
+                courseCategories,
+                user.getId(),
+                PageRequest.of(page, 10)
+        );
+        return getEnrolledCoursesResponse(enrollments);
+    }
+
+    public GetEnrolledCoursesResponse search(int page, Long userId, String value) throws EntityNotFoundException {
+        User user = getUser(userId);
+        Page<Enrollment> enrollments = enrollmentRepository.searchEnrolledCourses(
+                value,
+                user.getId(),
+                PageRequest.of(page, 10)
+        );
+        return getEnrolledCoursesResponse(enrollments);
+    }
+
+    private GetEnrolledCoursesResponse getEnrolledCoursesResponse(Page<Enrollment> enrollments) {
         return new GetEnrolledCoursesResponse(
                 enrollments.stream().map(enrollment -> new GetEnrolledCoursesResponse.EnrolledCourse(
                         enrollment.getCourse().getId(),
@@ -69,8 +94,11 @@ public class CourseEnrollmentService {
                         getCourseImage(enrollment.getCourse().getImageUrl()),
                         enrollment.getCourse().getRating(),
                         enrollment.getCourse().getSchedules(),
-                        resourceRepository.findAllByCourseOrderByUploadedDesc(enrollment.getCourse())
-                )).collect(Collectors.toList())
+                        resourceRepository.findAllByCourseOrderByUploadedDesc(enrollment.getCourse()),
+                        enrollment.getCourse().getTutor().getId()
+                )).collect(Collectors.toList()),
+                enrollments.getTotalPages(),
+                enrollments.getNumber()
         );
     }
 

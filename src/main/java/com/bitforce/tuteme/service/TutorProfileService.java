@@ -1,6 +1,8 @@
 package com.bitforce.tuteme.service;
 
+import com.bitforce.tuteme.dto.ServiceRequest.UpdateTutorProfileRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetTutorsResponse;
+import com.bitforce.tuteme.dto.ServiceResponse.TutorResponse;
 import com.bitforce.tuteme.dto.TutorProfileDTO;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.*;
@@ -30,30 +32,63 @@ public class TutorProfileService {
     private final CourseCategoryRepository courseCategoryRepository;
     private final FileStorageService fileStorageService = new FileStorageService("profilePicture/tutor");
 
-    public TutorProfileDTO updateTutorProfile(TutorProfileDTO tutorProfileDTO, Long userId) throws EntityNotFoundException {
-        User user = getUser(userId);
-        tutorProfileDTO.setImageUrl(user.getImageUrl());
-        BeanUtils.copyProperties(tutorProfileDTO, user);
+    public TutorResponse updateTutorProfile(UpdateTutorProfileRequest request) throws EntityNotFoundException {
+        User user = getUser(request.getUserId());
+
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setCity(request.getCity());
+        user.setGender(request.getGender());
+        user.setDistrict(request.getDistrict());
         userRepository.save(user);
 
-        Tutor tutor = tutorRepository.findByUserId(userId);
-        BeanUtils.copyProperties(tutorProfileDTO, tutor);
+        UserAuth userAuth = userAuthRepository.findByUserId(user.getId());
+        userAuth.setEmail(request.getEmail());
+        userAuthRepository.save(userAuth);
+
+        Tutor tutor = tutorRepository.findByUserId(user.getId());
+
+        tutor.setDescription(request.getBio());
+        tutor.setFullName(request.getFirstName() + " " + request.getLastName());
         tutorRepository.save(tutor);
 
-        return tutorProfileDTO;
+        return new TutorResponse(
+                tutor.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                userAuth.getEmail(),
+                user.getGender(),
+                user.getImageUrl(),
+                user.getCity(),
+                user.getDistrict(),
+                tutor.getDescription(),
+                tutor.getFacebook(),
+                tutor.getTwitter(),
+                tutor.getInstagram(),
+                tutor.getLinkedIn()
+        );
     }
 
-    public TutorProfileDTO getTutorProfile(Long userId) throws EntityNotFoundException {
-        TutorProfileDTO tutorProfileDTO = new TutorProfileDTO();
-        User user = getUser(userId);
-        UserAuth userAuth = userAuthRepository.findByUserId(userId);
-        Tutor tutor = tutorRepository.findByUserId(userId);
+    public TutorResponse getTutorProfile(Long tutorId) throws EntityNotFoundException {
+        Tutor tutor = getTutor(tutorId);
+        User user = tutor.getUser();
+        UserAuth userAuth = userAuthRepository.findByUserId(user.getId());
 
-        BeanUtils.copyProperties(user, tutorProfileDTO);
-        BeanUtils.copyProperties(tutor, tutorProfileDTO);
-        tutorProfileDTO.setEmail(userAuth.getEmail());
-
-        return tutorProfileDTO;
+        return new TutorResponse(
+                tutor.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                userAuth.getEmail(),
+                user.getGender(),
+                user.getImageUrl(),
+                user.getCity(),
+                user.getDistrict(),
+                tutor.getDescription(),
+                tutor.getFacebook(),
+                tutor.getTwitter(),
+                tutor.getInstagram(),
+                tutor.getLinkedIn()
+        );
     }
 
     public GetTutorsResponse getTutorProfiles(int page) {
@@ -128,6 +163,14 @@ public class TutorProfileService {
 
     public String getUserEmail(User user) {
         return userAuthRepository.findByUserId(user.getId()).getEmail();
+    }
+
+    public Tutor getTutor(Long id) throws EntityNotFoundException {
+        Optional<Tutor> tutorOptional = tutorRepository.findById(id);
+        if (!tutorOptional.isPresent()) {
+            throw new EntityNotFoundException("TUTOR_NOT_FOUND");
+        }
+        return tutorOptional.get();
     }
 
     @SneakyThrows

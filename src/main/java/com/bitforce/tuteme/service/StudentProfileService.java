@@ -1,6 +1,7 @@
 package com.bitforce.tuteme.service;
 
 import com.bitforce.tuteme.dto.StudentProfileDTO;;
+import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.model.*;
 import com.bitforce.tuteme.repository.EnrollmentRepository;
 import com.bitforce.tuteme.repository.StudentRepository;
@@ -20,10 +21,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -124,5 +122,14 @@ public class StudentProfileService {
 
     private List<Enrollment> getEnrolledCourses(User user) {
         return enrollmentRepository.findAllByUser(user);
+    }
+
+    public User getUser(Long studentId) throws EntityNotFoundException {
+        Optional<Student> studentOptional = studentRepository.findById(studentId);
+        if (!studentOptional.isPresent()) {
+            throw new EntityNotFoundException("STUDENT_NOT_FOUND");
+        }
+        Student student = studentOptional.get();
+        return student.getUser();
     }
 }

@@ -9,6 +9,8 @@ import com.bitforce.tuteme.dto.SignUpRequest;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
 import com.bitforce.tuteme.service.AuthService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,7 @@ import javax.transaction.Transactional;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final JwtUtil jwtUtil;
     private final AuthService authService;
 
@@ -38,26 +41,41 @@ public class AuthController {
     @Transactional
     @PostMapping("/sign-in")
     public ResponseEntity<?> authenticateUsers(@RequestBody LoginRequest request) {
-        AuthenticationResponse authenticationResponse = authService.authenticateUser(
-                request,
-                jwtUtil
-        );
-        AuthenticationControllerResponse authResponse = AuthenticationControllerResponse
-                .builder()
-                .token(authenticationResponse.getToken())
-                .expirationInMilliseconds(expiresIn)
-                .email(authenticationResponse.getEmail())
-                .profileId(authenticationResponse.getProfileId())
-                .role(authenticationResponse.getRole())
-                .userId(authenticationResponse.getUserId())
-                .build();
-        return ResponseEntity.ok(authResponse);
+        try {
+            AuthenticationResponse authenticationResponse = authService.authenticateUser(
+                    request,
+                    jwtUtil
+            );
+            AuthenticationControllerResponse authResponse = AuthenticationControllerResponse
+                    .builder()
+                    .token(authenticationResponse.getToken())
+                    .expirationInMilliseconds(expiresIn)
+                    .email(authenticationResponse.getEmail())
+                    .profileId(authenticationResponse.getProfileId())
+                    .role(authenticationResponse.getRole())
+                    .userId(authenticationResponse.getUserId())
+                    .imgSrc(authService.getUserImg(authenticationResponse.getRole(), authenticationResponse.getUserId()))
+                    .build();
+            return ResponseEntity.ok(authResponse);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignUpRequest signUpRequest, @RequestParam String userType) {
-        return authService.registerUser(signUpRequest, userType);
-
+        try {
+            log.info("Sign up info:: firstName: {}, lastName: {}, email: {}, type: {}",
+                    signUpRequest.getFirstName(),
+                    signUpRequest.getLastName(),
+                    signUpRequest.getEmail(),
+                    userType
+            );
+            return authService.registerUser(signUpRequest, userType);
+        } catch (Exception e) {
+            log.error("Unable to sign up");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
     @PostMapping("/forgotPassword")

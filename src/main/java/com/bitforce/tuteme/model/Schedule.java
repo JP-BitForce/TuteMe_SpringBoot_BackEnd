@@ -9,7 +9,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import java.time.LocalTime;
 
 @Entity
 @Data
@@ -23,7 +22,7 @@ public class Schedule {
 
     private String day;
 
-    private LocalTime startTime;
+    private String startTime;
 
-    private LocalTime endTime;
+    private String endTime;
 }

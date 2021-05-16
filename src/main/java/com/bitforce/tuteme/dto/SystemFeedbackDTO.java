@@ -15,5 +15,5 @@ public class SystemFeedbackDTO {
     private Long userId;
     private String userName;
     private String userType;
-    private String imageUrl;
+    private byte[] imageUrl;
 }

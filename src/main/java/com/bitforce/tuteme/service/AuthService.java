@@ -30,7 +30,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -42,6 +44,8 @@ public class AuthService {
     private final TutorRepository tutorRepository;
     private final StudentRepository studentRepository;
     private final EmailService emailService;
+    private final StudentProfileService studentProfileService;
+    private final TutorProfileService tutorProfileService;
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
@@ -108,7 +112,7 @@ public class AuthService {
         } else if (userType.equals("tutor")) {
             Tutor tutor = new Tutor();
             tutor.setUser(newUser);
-            tutor.setFullName(signUpRequest.getFirstName() + " " + signUpRequest.getLastName() );
+            tutor.setFullName(signUpRequest.getFirstName() + " " + signUpRequest.getLastName());
             tutorRepository.save(tutor);
         }
         userAuth.setUser(newUser);
@@ -164,5 +168,25 @@ public class AuthService {
         userAuth.setPasswordResetKey(null);
         userAuthRepository.save(userAuth);
         return "Password Reset successfully...!";
+    }
+
+    public byte[] getUserImg(String role, Long userId) throws EntityNotFoundException, IOException {
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (!userOptional.isPresent()) {
+            throw new EntityNotFoundException("USER_NOT_FOUND");
+        }
+        User user = userOptional.get();
+        byte[] img = null;
+        String imgUrl = user.getImageUrl();
+        if (imgUrl != null) {
+            if (role.equals("ROLE_STUDENT")) {
+                String[] filename = imgUrl.trim().split("http://localhost:8080/api/student/profile/uploads/profilePicture/student/");
+                img = studentProfileService.getImageByte(filename[1]);
+            } else if (role.equals("ROLE_TUTOR")) {
+                String[] filename = imgUrl.trim().split("http://localhost:8080/api/tutor/profile/uploads/profilePicture/tutor/");
+                img = tutorProfileService.getImageByte(filename[1]);
+            }
+        }
+        return img;
     }
 }

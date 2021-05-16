@@ -15,6 +15,8 @@ import java.util.List;
 @AllArgsConstructor
 public class GetEnrolledCoursesResponse {
     List<EnrolledCourse> enrolledCourses = new ArrayList<>();
+    private int total;
+    private int current;
 
     @Data
     @NoArgsConstructor
@@ -30,5 +32,6 @@ public class GetEnrolledCoursesResponse {
         private double rating;
         private List<Schedule> schedules;
         private List<Resource> resources;
+        private Long tutorId;
     }
 }

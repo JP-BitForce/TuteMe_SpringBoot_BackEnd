@@ -3,6 +3,8 @@ package com.bitforce.tuteme.controller;
 import com.bitforce.tuteme.dto.ApiResponse;
 import com.bitforce.tuteme.dto.ControllerRequest.EnrollCourseAndPayControllerRequest;
 import com.bitforce.tuteme.dto.ControllerRequest.EnrollCourseByBankControllerRequest;
+import com.bitforce.tuteme.dto.ControllerRequest.FilterEnrolledCoursesControllerRequest;
+import com.bitforce.tuteme.dto.ControllerRequest.SearchEnrolledCoursesControllerRequest;
 import com.bitforce.tuteme.dto.ServiceRequest.EnrollCourseAndPayRequest;
 import com.bitforce.tuteme.dto.ServiceResponse.GetEnrolledCoursesResponse;
 import com.bitforce.tuteme.exception.EntityNotFoundException;
@@ -99,6 +101,46 @@ public class CourseEnrollmentController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
             log.error("Unable to get enrolled courses for userId: {}", uId);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/filter_enrolled_courses")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> filterEnrolledCourses(@RequestBody FilterEnrolledCoursesControllerRequest request) {
+        try {
+            GetEnrolledCoursesResponse response = courseEnrollmentService.filter(
+                    request.getCourseCategories(),
+                    request.getPage(),
+                    request.getUserId()
+            );
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to filter enrolled courses for userId: {}", request.getUserId());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            log.error("Unable to filter enrolled courses");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/search_enrolled_courses")
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<?> searchEnrolledCourses(@RequestBody SearchEnrolledCoursesControllerRequest request) {
+        try {
+            GetEnrolledCoursesResponse response = courseEnrollmentService.search(
+                    request.getPage(),
+                    request.getUserId(),
+                    request.getValue()
+            );
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            log.error("Unable to search enrolled courses for userId: {}", request.getUserId());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            log.error("Unable to search enrolled courses");
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
