@@ -3,7 +3,7 @@ package com.bitforce.tuteme.configuration;
 import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -15,12 +15,14 @@ import java.util.Date;
 public class JwtUtil {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
-    @Value("${app.jwtSecret}")
-    private String secret;
+//    @Value("${app.jwtSecret}")
+//    private String secret;
+//
+//    @Value("${app.jwtExpirationInMs}")
+//    private int expiresIn;
 
-    @Value("${app.jwtExpirationInMs}")
-    private int expiresIn;
-
+    @Autowired
+    private AppProperties appProperties;
 
     public String generate(Authentication authentication) {
         TutemeUserDetails principal = (TutemeUserDetails) authentication.getPrincipal();
@@ -28,15 +30,15 @@ public class JwtUtil {
                 .builder()
                 .setSubject(principal.getUsername())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(new Date().getTime() + expiresIn))
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .setExpiration(new Date(new Date().getTime() + appProperties.getAuth().getJwtExpirationInMs()))
+                .signWith(SignatureAlgorithm.HS512, appProperties.getAuth().getJwtSecret())
                 .compact();
     }
 
     public String getUsername(String token) {
         return Jwts
                 .parser()
-                .setSigningKey(secret)
+                .setSigningKey(appProperties.getAuth().getJwtSecret())
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
@@ -55,7 +57,7 @@ public class JwtUtil {
 
     public boolean validate(String authToken) {
         try {
-            Jwts.parser().setSigningKey(secret).parseClaimsJws(authToken);
+            Jwts.parser().setSigningKey(appProperties.getAuth().getJwtSecret()).parseClaimsJws(authToken);
             return true;
         } catch (SignatureException e) {
             logger.error("Invalid JWT signature: {}", e.getMessage());

@@ -1,5 +1,6 @@
 package com.bitforce.tuteme.controller;
 
+import com.bitforce.tuteme.configuration.AppProperties;
 import com.bitforce.tuteme.configuration.JwtUtil;
 import com.bitforce.tuteme.dto.ApiResponse;
 import com.bitforce.tuteme.dto.ControllerResponse.AuthenticationControllerResponse;
@@ -12,7 +13,6 @@ import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,8 +35,8 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @Value("${app.jwtExpirationInMs}")
-    private int expiresIn;
+ @Autowired
+    AppProperties appProperties;
 
     @Transactional
     @PostMapping("/sign-in")
@@ -49,7 +49,7 @@ public class AuthController {
             AuthenticationControllerResponse authResponse = AuthenticationControllerResponse
                     .builder()
                     .token(authenticationResponse.getToken())
-                    .expirationInMilliseconds(expiresIn)
+                    .expirationInMilliseconds((int)appProperties.getAuth().getJwtExpirationInMs())
                     .email(authenticationResponse.getEmail())
                     .profileId(authenticationResponse.getProfileId())
                     .role(authenticationResponse.getRole())

@@ -19,6 +19,8 @@ public class UserAuth {
     private String role;
     private int loginAttempt;
     private String passwordResetKey;
+    private AuthProvider provider;
+    private String providerId;
 
     @OneToOne
     private User user;

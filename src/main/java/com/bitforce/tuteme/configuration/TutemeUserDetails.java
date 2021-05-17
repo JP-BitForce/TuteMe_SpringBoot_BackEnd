@@ -1,21 +1,26 @@
 package com.bitforce.tuteme.configuration;
 
 import com.bitforce.tuteme.model.UserAuth;
+import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-public class TutemeUserDetails implements UserDetails {
+@Data
+public class TutemeUserDetails implements OAuth2User, UserDetails {
 
     private Long id;
     private String email;
     private String password;
     private List<GrantedAuthority> authorities;
+    private Map<String, Object> attributes;
 
     public TutemeUserDetails(Long id, String email, String password, List<GrantedAuthority> authorities) {
         this.id = id;
@@ -35,6 +40,12 @@ public class TutemeUserDetails implements UserDetails {
                 userAuth.getPassword(),
                 authorities
         );
+    }
+
+    public static TutemeUserDetails create(UserAuth user, Map<String, Object> attributes) {
+        TutemeUserDetails userPrincipal = TutemeUserDetails.create(user);
+        userPrincipal.setAttributes(attributes);
+        return userPrincipal;
     }
 
 
@@ -76,5 +87,10 @@ public class TutemeUserDetails implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @Override
+    public String getName() {
+        return String.valueOf(id);
     }
 }
